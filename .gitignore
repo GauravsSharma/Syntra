@@ -1,0 +1,64 @@
+# ======================
+# 🔐 ENV FILES
+# ======================
+.env
+.env.*
+!.env.example
+
+# ======================
+# 📦 NODE MODULES
+# ======================
+node_modules/
+**/node_modules/
+
+# ======================
+# 🏗 BUILD FILES
+# ======================
+.next/
+dist/
+build/
+out/
+
+# ======================
+# ⚙️ LOGS
+# ======================
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ======================
+# 🧠 OS FILES
+# ======================
+.DS_Store
+Thumbs.db
+
+# ======================
+# 🧪 TEST COVERAGE
+# ======================
+coverage/
+
+# ======================
+# 🧾 TYPESCRIPT
+# ======================
+*.tsbuildinfo
+
+# ======================
+# 🖼 UPLOADS (optional)
+# ======================
+uploads/
+public/uploads/
+
+# ======================
+# 🔑 SECRETS
+# ======================
+*.pem
+*.key
+
+# ======================
+# 🧹 CACHE
+# ======================
+.cache/
+.tmp/
