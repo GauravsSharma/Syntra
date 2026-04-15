@@ -1,5 +1,11 @@
-import Footer from '@/components/footer';
-import Navbar from '@/components/navbar';
+import Navbar from '../../components/navbar';
+import Footer from '../../components/footer';
+import { Inter } from "next/font/google";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
 
 export const metadata = {
     title: 'Syntra - AI Powered Chatbot',
@@ -10,11 +16,12 @@ export const metadata = {
 };
 
 export default function Layout({ children }) {
+  
     return (
-        <>
+        <div className={`${inter.className}`}>
             <Navbar />
             {children}
             <Footer />
-        </>
+        </div>
     );
 }
