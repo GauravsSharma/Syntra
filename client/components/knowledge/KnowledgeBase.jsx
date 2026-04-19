@@ -5,6 +5,10 @@ import { Globe, Upload, FileText, Search, SlidersHorizontal } from "lucide-react
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import AddKnowledgeModal from "./AddKnowledge";
+import KnowledgeTable from "./KnowledgeTable";
+import { useGetKnowledgeSources } from "@/hooks/useKnowledge";
+import { useKnowledgeStore } from "@/stores/useKnowledgeStore";
+import SourceDetailSheet from "./SourceDetailSheet";
 
 
 const sourceCards = [
@@ -37,6 +41,10 @@ const sourceCards = [
 export default function KnowledgeBase() {
   const [modalOpen, setModalOpen] = useState(false);
   const [tab, setTab] = useState("website");
+  const {isLoading} = useGetKnowledgeSources()
+  const {sources} = useKnowledgeStore()
+  const [activeSource, setActiveSource] = useState(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const map = {
     "Add Website": "website",
     "Upload File": "file",
@@ -90,46 +98,10 @@ export default function KnowledgeBase() {
         })}
       </div>
 
-      {/* Sources Table */}
-      <div className="bg-[#131313] border border-zinc-800 rounded-xl overflow-hidden">
-        {/* Table Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
-          <h2 className="text-white font-medium">Sources</h2>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-              <Input
-                placeholder="Search sources..."
-                className="pl-9 bg-[#0f0f0f] border-zinc-700 text-zinc-300 placeholder:text-zinc-600 h-9 w-48 md:w-64 text-xs focus-visible:ring-zinc-600"
-              />
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-700"
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Column Headers */}
-        <div className="grid grid-cols-4 md:grid-cols-5 px-6 py-3 border-b border-zinc-800">
-          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider col-span-1">Name</span>
-          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider hidden md:block">Type</span>
-          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Status</span>
-          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider hidden sm:block">Last Updated</span>
-          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider text-right">Actions</span>
-        </div>
-
-        {/* Empty State */}
-        <div className="flex items-center justify-center py-16 px-6">
-          <p className="text-zinc-500 text-xs">No knowledge sources added yet.</p>
-        </div>
-      </div>
-
+      <KnowledgeTable isLoading={isLoading} sources={sources} setActiveSource={setActiveSource} setIsSheetOpen={setIsSheetOpen} />
       {/* Modal */}
       <AddKnowledgeModal open={modalOpen} onClose={() => setModalOpen(false)} tab={tab} />
+        <SourceDetailSheet isSheetOpen={isSheetOpen} setIsSheetOpen={setIsSheetOpen} activeSource={activeSource} />
     </div>
   );
 }

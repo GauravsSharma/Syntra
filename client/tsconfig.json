@@ -37,7 +37,7 @@
     "**/*.mts",
     "**/*.ts",
     "**/*.tsx"
-, "app/dashboard/page.jsx", "components/ui/button.jsx", "components/ui/dialog.jsx", "components/ui/input.jsx"  ],
+, "app/dashboard/page.jsx", "components/ui/button.jsx", "components/ui/dialog.jsx", "components/ui/input.jsx", "lib/utils.js"  ],
   "exclude": [
     "node_modules"
   ]

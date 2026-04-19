@@ -31,14 +31,29 @@ model Metadata {
 }
 
 model KnowledgeSource {
-  id           String   @id @default(uuid())
-  user_email   String   @unique
-  type         String
-  name         String
-  status       String   @default("active")
+  id           String   @id @default(uuid()) 
+  user_email   String   
+  type         String  
+  name         String 
+  status       String   @default("active") 
   source_url   String?
   content      String?
-  meta_data    String?
-  last_updated DateTime @default(now())
+  meta_data    Json?
+  last_updated DateTime @default(now())  
   created_at   DateTime @default(now())
+}
+
+model Section {
+  id            String   @id @default(uuid())
+  userEmail     String   @map("user_email")
+  name          String
+  description   String
+  sourceIds     String[] @map("source_ids")
+  tone          String
+  allowedTopics String?  @map("allowed_topics")
+  blockedTopics String?  @map("blocked_topics")
+  status        String   @default("active")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("sections")
 }

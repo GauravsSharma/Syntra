@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAddKnowledge } from "@/hooks/useKnowledge";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function AddKnowledgeModal({ open, onClose, tab = "website" }) {
   const [activeTab, setActiveTab] = useState(tab);
@@ -20,6 +21,7 @@ export default function AddKnowledgeModal({ open, onClose, tab = "website" }) {
   const [isDragging, setIsDragging] = useState(false);
   const [errors, setErrors] = useState({});
   const { mutate, isPending } = useAddKnowledge()
+  const queryClient = useQueryClient();
   const tabs = [
     { id: "website", label: "WEBSITE" },
     { id: "qa", label: "Q&A / TEXT" },
@@ -73,10 +75,6 @@ export default function AddKnowledgeModal({ open, onClose, tab = "website" }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleImport = () => {
-    if (!validate()) return;
-    handleClose();
-  };
 
   const handleClose = () => {
     setWebsiteUrl("");
@@ -119,7 +117,7 @@ export default function AddKnowledgeModal({ open, onClose, tab = "website" }) {
     }
     if (type === "qa") {
       console.log("qa submit called !");
-      formdata.append("type", "qa");
+      formdata.append("type", "text");
       formdata.append("title", qaContent.title);
       formdata.append("content", qaContent.content);
     }
@@ -132,6 +130,7 @@ export default function AddKnowledgeModal({ open, onClose, tab = "website" }) {
       onSuccess: () => {
         handleClose();
         toast.success("Knowledge source added successfully!");
+        queryClient.invalidateQueries({ queryKey: ["et-knowledge-sources"] });
       },
       onError: (err) => {
         console.log(err);

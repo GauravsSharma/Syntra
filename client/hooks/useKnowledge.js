@@ -1,5 +1,6 @@
 import api from "@/lib/axios";
-import { useMutation } from "@tanstack/react-query";
+import { useKnowledgeStore } from "@/stores/useKnowledgeStore";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 export const useAddKnowledge = () => {
   return useMutation({
@@ -9,3 +10,14 @@ export const useAddKnowledge = () => {
     },
   });
 };
+export const useGetKnowledgeSources = () => {
+    const { setSources } = useKnowledgeStore()
+    return useQuery({
+        queryKey: ["get-knowledge-sources"],
+        queryFn: async () => {
+            const res = await api.get('/knowledge')
+            setSources(res.data.data)
+            return res.data.data;
+        }
+    })
+}
