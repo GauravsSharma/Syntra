@@ -50,10 +50,30 @@ model Section {
   description   String
   sourceIds     String[] @map("source_ids")
   tone          String
-  allowedTopics String?  @map("allowed_topics")
-  blockedTopics String?  @map("blocked_topics")
+  allowedTopics String[] @default([]) @map("allowed_topics")
+  blockedTopics String[] @default([]) @map("blocked_topics")
   status        String   @default("active")
   createdAt     DateTime @default(now()) @map("created_at")
 
   @@map("sections")
+}
+
+model ChatBotMetadata {
+  id             String   @id @default(uuid())
+  user_email     String    @unique
+  color          String?   @default("#4f39f6")
+  welcome_message String?  @default("Hi there, How can I help you today?")
+  created_at     DateTime @default(now())
+
+  @@map("chatBotMetadata")
+}
+
+model TeamMember {
+  id             String   @id @default(uuid())
+  user_email     String
+  name           String
+  organization_id String
+  role           String   @default("member")
+  status         String   @default("pending")
+  created_at     DateTime @default(now())
 }

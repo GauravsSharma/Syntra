@@ -15,7 +15,6 @@ export const authMiddleware = (
     }
     
     let parsed = JSON.parse(session);
-
     req.user = {
       email: parsed.email,
       organizationId: parsed.organization_id || null,

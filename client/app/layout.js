@@ -11,7 +11,7 @@ const inter = Inter({
 
 export default function RootLayout({ children }) {
     return (
-        <html lang='en'>
+        <html lang='en' className='dark'>
             <LenisScroll />
             <body className={`${inter.className}`}>
                 <QueryProvider>

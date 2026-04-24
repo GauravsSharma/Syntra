@@ -30,7 +30,7 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const {metadata,user} = useUserStore()
   const pathname = usePathname();
-console.log(metadata,user);
+  
 
   const isActive = (href) =>
     href === "/dashboard"
@@ -42,7 +42,7 @@ console.log(metadata,user);
       initial={false}
       animate={{ width: collapsed ? 68 : 220 }}
       transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-      className="relative flex flex-col h-screen border-r border-white/[0.06] shrink-0 overflow-hidden"
+      className=" flex flex-col h-screen fixed top-0 left-0 border-r border-white/[0.06] shrink-0 overflow-hidden"
     >
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-5 border-b border-white/[0.06] min-h-[64px]">

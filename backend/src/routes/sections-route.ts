@@ -1,0 +1,13 @@
+import express from 'express';
+
+const router = express.Router();
+
+import { upload } from '../config/multer.js';
+import { authMiddleware } from '../middleware/auth.js';
+import { addSection, deleteSection, getSections } from '../controllers/sections.js';
+
+router.get("/", authMiddleware,getSections)
+router.post("/", authMiddleware ,upload.single("file"),addSection)
+router.delete("/:id", authMiddleware, deleteSection)
+
+export default router;

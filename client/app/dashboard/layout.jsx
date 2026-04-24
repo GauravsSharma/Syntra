@@ -20,7 +20,7 @@ const DashboardLayout = async ({ children }) => {
   return (
     <div className={`${inter.className} bg-[#050509] min-h-screen font-sans text-zinc-100 flex selection:bg-zinc-800 antialiased w-full`}>
       <Sidebar />
-     <div className='w-full'>
+     <div className='w-full md:ml-54'>
        {children}
      </div>
     </div>

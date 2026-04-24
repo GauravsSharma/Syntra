@@ -38,6 +38,7 @@ const SectionFormFields = ({
     isLoadingSources,
     isDisabled,
 }) => {
+    
     return (
         <>
             <div className="space-y-4">
@@ -75,13 +76,11 @@ const SectionFormFields = ({
                     <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">
                         Data Sources
                     </h4>
-
                     <span className="text-xs text-zinc-500">
                         {selectedSources.length} attached
                     </span>
                 </div>
-
-                {/* 👇 Now Select is on next line */}
+                {/* Now Select is on next line */}
                 <Select
                     value={selectedSources[0] || ""}
                     onValueChange={(value) => {
