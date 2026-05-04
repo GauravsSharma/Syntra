@@ -3,8 +3,6 @@ import crypto from "crypto";
 import scalekit from '../config/scalkit.js';
 import { prisma } from '../lib/prisma.js';
 
-
-
 export const generateRedirectUrl = async (req: Request, res: Response) => {
     try {
         const state = crypto.randomBytes(16).toString("hex");

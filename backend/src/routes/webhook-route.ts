@@ -2,9 +2,8 @@ import express from 'express';
 
 const router = express.Router();
 
-import { upload } from '../config/multer.js';
-import { authMiddleware } from '../middleware/auth.js';
+import { recieveInvitationConfimation } from '../controllers/webhooks.js';
 
-router.get("/scalekit", authMiddleware)
+router.post("/scalekit",recieveInvitationConfimation)
 
 export default router;

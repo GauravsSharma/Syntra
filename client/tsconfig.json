@@ -37,7 +37,7 @@
     "**/*.mts",
     "**/*.ts",
     "**/*.tsx"
-, "app/dashboard/page.jsx", "components/ui/button.jsx", "components/ui/dialog.jsx", "components/ui/input.jsx", "lib/utils.js"  ],
+, "app/dashboard/page.jsx", "components/ui/button.jsx", "components/ui/dialog.jsx", "components/ui/input.jsx", "lib/utils.js", "components/conversation/MessageInput.jsx", "components/conversation/MessageBubble.jsx", "components/conversation/ConversationView.jsx", "components/conversation/ConversationSidebar.jsx", "components/conversation/ConversationHeader.jsx", "lib/data.js"  ],
   "exclude": [
     "node_modules"
   ]

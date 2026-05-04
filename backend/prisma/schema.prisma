@@ -64,7 +64,7 @@ model ChatBotMetadata {
   color          String?   @default("#4f39f6")
   welcome_message String?  @default("Hi there, How can I help you today?")
   created_at     DateTime @default(now())
-
+  organization_id String
   @@map("chatBotMetadata")
 }
 
@@ -76,4 +76,48 @@ model TeamMember {
   role           String   @default("member")
   status         String   @default("pending")
   created_at     DateTime @default(now())
+
+  @@unique([user_email, organization_id])
+}
+
+enum ConversationStatus {
+  OPEN
+  ESCALATED
+  RESOLVED
+  ACTIVE
+}
+
+model Conversation {
+  id           String             @id @default(uuid())
+  user_email   String?
+  visitor_ip   String?
+  name         String?
+  chatbot_id   String
+  created_at   DateTime           @default(now())
+
+  status        ConversationStatus @default(OPEN)
+  escalated_at  DateTime?
+  resolved_at   DateTime?
+  resolved_by   String?            // 👈 bas yeh add karo (email of agent)
+
+  messages      Message[]
+}
+
+model Message {
+  id              String       @id @default(uuid())
+  conversation_id String
+  role            String
+  content         String
+  created_at      DateTime     @default(now())
+
+  conversation    Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+}
+
+model Widget {
+  id              String   @id @default(uuid())
+  organization_id String
+  name            String
+  allowed_domains String[]
+  status          String   @default("active")
+  created_at      DateTime @default(now())
 }

@@ -8,13 +8,7 @@ import { EmbedPanel } from "@/components/chatbot/EmbedPanel";
 import { Separator } from "@/components/ui/separator";
 import { useGetChatBotMetaData, useTestChatbot } from "@/hooks/useChatBot";
 import { useGetKnowledgeSources } from "@/hooks/useKnowledge";
-import { div, metadata } from "framer-motion/client";
 import { useEffect, useRef, useState } from "react";
-
-
-const SECTIONS = ["FAQ", "Billing", "Technical", "General"];
-const CHATBOT_ID = "1eecd3e5-485d-4a82-950c-ef573d03cc6e";
-
 
 const SECTION_REPLIES = {
   FAQ: "Great question! You can find our frequently asked questions in the knowledge base. Is there something specific you'd like to know?",
@@ -196,7 +190,7 @@ const handleSend = () => {
             <Separator />
 
             <div className="rounded-xl border border-border bg-card p-4">
-              <EmbedPanel chatbotId={CHATBOT_ID} />
+              <EmbedPanel chatbotId={metaData.id} />
             </div>
           </div>
         </div>

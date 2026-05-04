@@ -10,7 +10,8 @@ export default function WorkspaceSettings({ workspace }) {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      {/* 1 col on mobile → 2 col on sm+ */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
           <label className="text-white/60 text-xs font-medium">Workspace Name</label>
           <input

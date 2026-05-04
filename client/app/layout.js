@@ -9,6 +9,12 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+export const metadata = {
+  icons: {
+    icon: '/favicon.svg',
+  },
+};
+
 export default function RootLayout({ children }) {
     return (
         <html lang='en' className='dark'>
@@ -16,7 +22,7 @@ export default function RootLayout({ children }) {
             <body className={`${inter.className}`}>
                 <QueryProvider>
                     {children}
-                     <Toaster />
+                     <Toaster theme='dark'/>
                 </QueryProvider>
             </body>
         </html>

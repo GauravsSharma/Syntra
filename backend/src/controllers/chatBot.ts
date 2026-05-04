@@ -1,17 +1,22 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { countConversatonToken, generateReply, summarizeConversation } from "../utils/ai";
+import { parseAIResponse } from "../utils/help";
 
 export const getMetaData = async (req: Request, res: Response) => {
     try {
         const user_email = (req as any).user.email;
+        const org_id = (req as any).user.organizationId;
+        console.log(org_id);
+        
         let existingData = await prisma.chatBotMetadata.findFirst({
             where: { user_email }
         })
+
         if (!existingData) {
             existingData = await prisma.chatBotMetadata.create({
                 data: {
-                    user_email,
+                    user_email,                    organization_id: org_id
                 }
             })
         }
@@ -30,15 +35,18 @@ export const getMetaData = async (req: Request, res: Response) => {
 }
 export const saveChanges = async (req: Request, res: Response) => {
     try {
+        const org_id = (req as any).user.organizationId;
         const user_email = (req as any).user.email;
         const { color, welcomeMessage } = req.body;
         const updated = await prisma.chatBotMetadata.update({
             where: { user_email },
             data: {
                 color,
-                welcome_message: welcomeMessage
+                welcome_message: welcomeMessage,
+                organization_id: org_id
             }
         })
+
         res.status(200).json({
             success: true,
             data: updated
@@ -76,7 +84,7 @@ export const testChatBot = async (req: Request, res: Response) => {
         });
         let context = sources.map((s) => s.content).filter(Boolean).join("\n\n");
         console.log(context);
-        
+
         const tokenCount = await countConversatonToken(messages);
         if (tokenCount > 6000) {
             const recentMessage = messages.slice(-10);
@@ -88,9 +96,10 @@ export const testChatBot = async (req: Request, res: Response) => {
             }
         }
         const reply = await generateReply(context, messages);
+        const { mssg } = parseAIResponse(reply)
         return res.status(200).json({
             success: true,
-            message: reply
+            message: mssg
         })
     } catch (error) {
         console.log(error);

@@ -8,7 +8,7 @@ export const useGetUser = () => {
     return useQuery({
         queryKey: ["get-user"],
         queryFn: async () => {
-            const res = await api.get('/auth')
+            const res = await api.get('/api/auth')
             setUser(res.data.user)
             return res.data.user;
         }
@@ -17,7 +17,7 @@ export const useGetUser = () => {
 export const useSendMetadata = () => {
   return useMutation({
     mutationFn: async (data) => {
-      const res = await api.post("/auth/metadata", data);
+      const res = await api.post("/api/auth/metadata", data);
       return res.data;
     },
   });
@@ -28,7 +28,7 @@ export const useGetMetaData = ()=>{
     return useQuery({
         queryKey: ["get-metadata"],
         queryFn: async () => {
-            const res = await api.get('/auth/metadata')
+            const res = await api.get('/api/auth/metadata')
             setMetadata(res.data.metadata)
             return res.data.metadata;
         }

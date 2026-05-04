@@ -5,7 +5,7 @@ import { useState } from "react";
  
 export function EmbedCodeBlock({ chatbotId }) {
   const [copied, setCopied] = useState(false);
-  const code = `<script src="https://oneminute-support.vercel.app/widget.js"\n  data-id="${chatbotId}"\n  defer>\n</script>`;
+  const code = `<script src="http://localhost:5000/widget.js"\n  data-id="${chatbotId}"\n  defer>\n</script>`;
  
   const handleCopy = () => {
     navigator.clipboard.writeText(code);

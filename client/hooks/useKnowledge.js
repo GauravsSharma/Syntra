@@ -5,7 +5,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 export const useAddKnowledge = () => {
   return useMutation({
     mutationFn: async (data) => {
-      const res = await api.post("/knowledge", data);
+      const res = await api.post("/api/knowledge", data);
       return res.data;
     },
   });
@@ -15,7 +15,7 @@ export const useGetKnowledgeSources = () => {
     return useQuery({
         queryKey: ["get-knowledge-sources"],
         queryFn: async () => {
-            const res = await api.get('/knowledge')
+            const res = await api.get('/api/knowledge')
             setSources(res.data.data)
             return res.data.data;
         }

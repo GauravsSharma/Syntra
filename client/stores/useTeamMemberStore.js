@@ -3,6 +3,11 @@ import { create } from "zustand";
 export const useTeamMemberStore = create((set) => ({
   members: [],
 
+  setMembers: (members) =>
+    set(() => ({
+      members,
+    })),
+
   addMember: (member) =>
     set((state) => ({
       members: [member, ...state.members],

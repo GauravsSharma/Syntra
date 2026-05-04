@@ -16,8 +16,8 @@ import { UserPlus, Loader2 } from "lucide-react";
 import { useAddMember } from "@/hooks/useOrganization";
 import { toast } from "sonner";
 
-export default function AddMemberDialog({ open,setOpen,onMemberAdded }) {
-  const {mutate,isPending:loading}= useAddMember()
+export default function AddMemberDialog({ open, setOpen, onMemberAdded }) {
+  const { mutate, isPending: loading } = useAddMember()
   const [error, setError] = useState("");
   const [form, setForm] = useState({ name: "", email: "" });
 
@@ -38,13 +38,15 @@ export default function AddMemberDialog({ open,setOpen,onMemberAdded }) {
       return;
     }
 
-    mutate({...form,member_email:form.email},{
-        onSuccess:()=>{
-            toast.success("Member Invited successfully.")
-        },
-        onError:()=>{
-            toast.error("Error while inviting the member.")
-        }
+    mutate({ ...form, member_email: form.email }, {
+      onSuccess: () => {
+        setForm({ user: "", email: "" })
+        setOpen(false)
+        toast.success("Member Invited successfully.")
+      },
+      onError: () => {
+        toast.error("Error while inviting the member.")
+      }
     })
   };
 
@@ -110,7 +112,7 @@ export default function AddMemberDialog({ open,setOpen,onMemberAdded }) {
           <Button
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-white text-black hover:bg-white/90 font-medium rounded-lg" 
+            className="bg-white text-black hover:bg-white/90 font-medium rounded-lg"
           >
             {loading ? (
               <>

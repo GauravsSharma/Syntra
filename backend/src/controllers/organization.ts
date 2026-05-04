@@ -61,7 +61,7 @@ export const addMemberToOrganization = async (req: Request, res: Response) => {
             },
             sendInvitationEmail: true
         })
-        await prisma.teamMember.create({
+        const member = await prisma.teamMember.create({
             data: {
                 user_email: member_email,
                 name: name || member_email.split("@")[0],
@@ -71,13 +71,31 @@ export const addMemberToOrganization = async (req: Request, res: Response) => {
         return res.status(200).json({
             success: true,
             message: "Email sent successfully.",
-            member: {
-                name: name || member_email.split("@")[0],
-                email: member_email,
-            }
+            member
         })
     } catch (error) {
+        console.log(error);
+        
         res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        })
+    }
+}
+export const getTeamMembers = async(req: Request, res: Response)=>{
+    try {
+       const og_id = (req as any).user.organization_id;
+
+      const team_members = await prisma.teamMember.findMany({
+        where:{organization_id:og_id}
+      })
+      res.status(200).json({
+        success:true,
+        team_members
+      })
+    } catch (error) {
+        console.log(error);
+          res.status(500).json({
             success: false,
             message: "Internal server error"
         })

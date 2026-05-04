@@ -6,7 +6,7 @@ export const useAddSection = () => {
     const { addSection } = useSectionStore();
   return useMutation({
     mutationFn: async (data) => {
-      const res = await api.post("/section", data);
+      const res = await api.post("/api/section", data);
       addSection(res.data.data);
       return res.data;
     },
@@ -17,7 +17,7 @@ export const useGetSections = () => {
     return useQuery({
         queryKey: ["get-sections"],
         queryFn: async () => {
-            const res = await api.get('/section')
+            const res = await api.get('/api/section')
             setSections(res.data.data)
             return res.data.data;
         }
@@ -27,7 +27,7 @@ export const useDeleteSection = () => {
     const { deleteSection } = useSectionStore();
     return useMutation({
         mutationFn: async (id) => {
-            const res = await api.delete(`/section/${id}`);
+            const res = await api.delete(`/api/section/${id}`);
             deleteSection(id);
             return res.data;
         },

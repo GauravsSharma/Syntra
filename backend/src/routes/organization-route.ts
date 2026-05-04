@@ -1,10 +1,13 @@
-import { addMemberToOrganization, getOrganization } from "../controllers/organization";
+import { addMemberToOrganization, getOrganization, getTeamMembers } from "../controllers/organization";
 import express from 'express';
 
-const router = express.Router();
 import { authMiddleware } from '../middleware/auth.js';
 
-router.get("/", authMiddleware,getOrganization)
-router.post("/members/add", authMiddleware,addMemberToOrganization)
+const router = express.Router();
+
+router.get("/", authMiddleware, getOrganization)
+
+router.get("/members", authMiddleware, getTeamMembers)
+router.post("/members", authMiddleware, addMemberToOrganization)
 
 export default router;
