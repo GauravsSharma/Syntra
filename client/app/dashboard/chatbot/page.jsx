@@ -8,6 +8,8 @@ import { EmbedPanel } from "@/components/chatbot/EmbedPanel";
 import { Separator } from "@/components/ui/separator";
 import { useGetChatBotMetaData, useTestChatbot } from "@/hooks/useChatBot";
 import { useGetKnowledgeSources } from "@/hooks/useKnowledge";
+import { useGetSections } from "@/hooks/useSections";
+import { useUserStore } from "@/stores/useUserStore";
 import { useEffect, useRef, useState } from "react";
 
 const SECTION_REPLIES = {
@@ -19,12 +21,13 @@ const SECTION_REPLIES = {
 
 export default function ChatbotPage() {
   const [primaryColor, setPrimaryColor] = useState("#4f39f6");
+  const { metadata } = useUserStore()
   const [welcomeMessage, setWelcomeMessage] = useState(
     "Hi there, How can I help you today?"
   );
   const [sections, setSections] = useState([]);
-  const { data: metaData, isLoading } = useGetChatBotMetaData()
-  const [messages, setMessages]  = useState([
+  const { data: metaData, isLoading } = useGetChatBotMetaData(metadata)
+  const [messages, setMessages] = useState([
     { role: "assistant", content: "Hi there, How can I help you today?" },
   ]);
   const { mutate, isPending: isTyping } = useTestChatbot()
@@ -32,7 +35,7 @@ export default function ChatbotPage() {
   const [activeSection, setActiveSection] = useState(null);
   const scrollRef = useRef(null);
 
-  const { data, isLoading: knowLoading } = useGetKnowledgeSources()
+  const { data, isLoading: knowLoading } = useGetSections()
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -50,56 +53,44 @@ export default function ChatbotPage() {
     setActiveSection((prev) => (prev === sectionId ? null : sectionId));
   };
 
-  const simulateReply = (currentSection) => {
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: SECTION_REPLIES[currentSection] ?? "How can I help further?",
-        },
-      ]);
-    }, 1500);
-  };
+  const handleSend = () => {
+    if (!input.trim() || !activeSection) return;
 
-const handleSend = () => {
-  if (!input.trim() || !activeSection) return;
+    const userMsg = input.trim();
 
-  const userMsg = input.trim();
+    const updatedMessages = [
+      ...messages,
+      { role: "user", content: userMsg }
+    ];
 
-  const updatedMessages = [
-    ...messages,
-    { role: "user", content: userMsg }
-  ];
+    // Update UI immediately (optimistic update)
+    setMessages(updatedMessages);
+    setInput("");
 
-  // Update UI immediately (optimistic update)
-  setMessages(updatedMessages);
-  setInput("");
-
-  mutate(
-    {
-      messages: updatedMessages,
-      knowledgeSourcsIds: [activeSection]
-    },
-    {
-      onSuccess: (mssg) => {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: mssg }
-        ]);
+    mutate(
+      {
+        messages: updatedMessages,
+        sectionId: activeSection
       },
-      onError: () => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content: "Can't respond at a moment."
-          }
-        ]);
+      {
+        onSuccess: (mssg) => {
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: mssg }
+          ]);
+        },
+        onError: () => {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content: "Can't respond at a moment."
+            }
+          ]);
+        }
       }
-    }
-  );
-};
+    );
+  };
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -125,6 +116,7 @@ const handleSend = () => {
       return { name: s.name, id: s.id }
     })
 
+
     setSections(secs);
   }, [data])
 
@@ -144,21 +136,23 @@ const handleSend = () => {
         }
       `}</style>
 
-      <div className="flex flex-col h-screen bg-background overflow-hidden">
+      <div className="flex flex-col min-h-screen bg-background overflow-hidden">
         {/* Page Header */}
-        <div className="px-8 py-5 border-b border-border shrink-0">
-          <h1 className="text-xl font-semibold tracking-tight">
+        <div className="px-4 py-4 sm:px-6 lg:px-8 border-b border-border shrink-0">
+          <h1 className="text-lg sm:text-xl font-semibold tracking-tight">
             Chatbot Playground
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             Test your assistant, customize appearance, and deploy it.
           </p>
         </div>
 
         {/* Page Body */}
-        <div className="flex-1 flex overflow-hidden p-6 gap-5">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden p-4 sm:p-5 lg:p-6 gap-5">
+
           {/* Chat Simulator */}
-          <div className="flex-1 min-w-0 ">
+          <div className="flex-1 min-w-0 min-h-[400px] lg:min-h-0">
             <ChatSimulator
               messages={messages}
               primaryColor={primaryColor}
@@ -176,7 +170,7 @@ const handleSend = () => {
           </div>
 
           {/* Right Panel */}
-          <div className="w-[40%] shrink-0 flex flex-col gap-2 overflow-y-auto">
+          <div className="w-full lg:w-[40%] xl:w-[35%] shrink-0 flex flex-col gap-4 overflow-y-auto">
             <div className="rounded-xl border border-border bg-card p-4">
               <AppearancePanel
                 primaryColor={primaryColor}

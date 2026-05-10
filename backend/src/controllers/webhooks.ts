@@ -45,9 +45,21 @@ export const recieveInvitationConfimation = async (req: Request, res: Response) 
                         }
                     },
                     data: {
-                       status:"active"
+                        status: "active"
                     }
                 });
+                await prisma.user.create({
+                    data: {
+                        email: params.user.email,
+                        name: params.user.name || params.user.email.split("@")[0],
+
+                        organizations: {
+                            connect: {
+                                id: params.organization.id
+                            }
+                        }
+                    }
+                })
                 break;
             default:
                 console.log('Unhandled event type:', event.type);

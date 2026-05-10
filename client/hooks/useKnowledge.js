@@ -10,10 +10,10 @@ export const useAddKnowledge = () => {
     },
   });
 };
-export const useGetKnowledgeSources = () => {
+export const useGetKnowledgeSources = (metadata) => {
     const { setSources } = useKnowledgeStore()
     return useQuery({
-        queryKey: ["get-knowledge-sources"],
+        queryKey: ["get-knowledge-sources", metadata],
         queryFn: async () => {
             const res = await api.get('/api/knowledge')
             setSources(res.data.data)

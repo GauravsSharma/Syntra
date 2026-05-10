@@ -17,8 +17,10 @@ export const authMiddleware = (
     let parsed = JSON.parse(session);
     req.user = {
       email: parsed.email,
+      role: parsed.role || "admin",
       organizationId: parsed.organization_id || null,
     };
+console.log(parsed.role);
 
     next();
   } catch (error) {

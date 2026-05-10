@@ -4,7 +4,7 @@ const page = () => {
     return (
         <Script
             src="http://localhost:3000/widget.js"
-            data-id="06bdbb18-cdf4-4e5a-b1cc-1055ede35573"
+            data-id="4ceb1342-db41-470f-b301-29987800f8af"
             defer
         >
         </Script>

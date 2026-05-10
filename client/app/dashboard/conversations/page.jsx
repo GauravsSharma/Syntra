@@ -4,18 +4,15 @@ import { ConversationSidebar } from "@/components/conversation/ConversationSideb
 import { ConversationView } from "@/components/conversation/ConversationView";
 import { useGetConversation } from "@/hooks/useOrganization";
 import { useGetChatBotMetaData } from "@/hooks/useChatBot";
+import { useConversationStore } from "@/stores/useConversationStore";
 
 export default function InboxPage() {
   const { data: metadata } = useGetChatBotMetaData();
-  const { data, isLoading } = useGetConversation(metadata?.id);
-  const [conversations, setConversations] = useState([]);
+  const { isLoading } = useGetConversation(metadata?.id);
+  const {sideBarConv} = useConversationStore()
   const [selectedId, setSelectedId] = useState("");
   // Controls mobile view: "list" | "chat"
   const [mobileView, setMobileView] = useState("list");
-
-  useEffect(() => {
-    setConversations(data ? data : []);
-  }, [data]);
 
   const handleSelect = (id) => {
     setSelectedId(id);
@@ -43,7 +40,7 @@ export default function InboxPage() {
       {/* ── Desktop: both panels side by side ── */}
       <div className="hidden md:flex w-full h-full">
         <ConversationSidebar
-          conversations={conversations}
+          conversations={sideBarConv}
           selectedId={selectedId}
           onSelect={handleSelect}
         />
@@ -66,7 +63,7 @@ export default function InboxPage() {
           }}
         >
           <ConversationSidebar
-            conversations={conversations}
+            conversations={sideBarConv}
             selectedId={selectedId}
             onSelect={handleSelect}
           />

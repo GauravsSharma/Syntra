@@ -9,6 +9,7 @@ import KnowledgeTable from "./KnowledgeTable";
 import { useGetKnowledgeSources } from "@/hooks/useKnowledge";
 import { useKnowledgeStore } from "@/stores/useKnowledgeStore";
 import SourceDetailSheet from "./SourceDetailSheet";
+import { useUserStore } from "@/stores/useUserStore";
 
 
 const sourceCards = [
@@ -41,7 +42,8 @@ const sourceCards = [
 export default function KnowledgeBase() {
   const [modalOpen, setModalOpen] = useState(false);
   const [tab, setTab] = useState("website");
-  const {isLoading} = useGetKnowledgeSources()
+   const {metadata} = useUserStore()
+  const {isLoading} = useGetKnowledgeSources(metadata)
   const {sources} = useKnowledgeStore()
   const [activeSource, setActiveSource] = useState(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -60,21 +62,21 @@ export default function KnowledgeBase() {
   return (
     <div className="w-full min-h-screen p-6 md:p-8">
       {/* Header */}
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-white mb-1">Knowledge Base</h1>
-          <p className="text-xs text-zinc-400">
-            Manage your website sources, documents, and uploads here.
-          </p>
-        </div>
-        <Button
-          onClick={() => setModalOpen(true)}
-          className="bg-white text-black hover:bg-zinc-200 text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-2 shrink-0"
-        >
-          <span className="text-lg leading-none">+</span>
-          Add Knowledge
-        </Button>
-      </div>
+   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
+  <div>
+    <h1 className=" text-xl sm:text-2xl font-semibold text-white mb-1">Knowledge Base</h1>
+    <p className="text-xs text-zinc-400">
+      Manage your website sources, documents, and uploads here.
+    </p>
+  </div>
+  <Button
+    onClick={() => setModalOpen(true)}
+    className="bg-white text-black hover:bg-zinc-200 text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-2 shrink-0 self-start sm:self-auto w-full sm:w-fit"
+  >
+    <span className="text-lg leading-none">+</span>
+    Add Knowledge
+  </Button>
+</div>
 
       {/* Source Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">

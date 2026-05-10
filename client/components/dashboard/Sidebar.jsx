@@ -11,9 +11,13 @@ import {
   MessageSquare,
   Inbox,
   Settings,
+  ChevronsUpDown,
 } from "lucide-react";
 import { useUserStore } from "@/stores/useUserStore";
 import { useConversationStore } from "@/stores/useConversationStore";
+import OrgSwitcher from "../OrgSwitcher";
+// import {  } from "radix-ui";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
@@ -23,17 +27,57 @@ const navItems = [
   { label: "Conversations", icon: Inbox, href: "/dashboard/conversations" },
   { label: "Settings", icon: Settings, href: "/dashboard/settings" },
 ];
+const mockOrgs = [
+  {
+    id: '1',
+    name: 'Acme Corp',
+    ownerEmail: 'gauravsharma16072001@gmail.com',
+    logo: null,
+  },
+  {
+    id: '2',
+    name: 'Stark Industries',
+    ownerEmail: 'tony@starkindustries.com',
+    logo: null,
+  },
+  {
+    id: '3',
+    name: 'Wayne Enterprises',
+    ownerEmail: 'bruce@wayne.com',
+    logo: null,
+  },
+];
+
 
 export default function Sidebar() {
+  const { metadata } = useUserStore()
+  const [open, setOpen] = useState(false);
+  const [activeOrg, setActiveOrg] = useState();
   const [collapsed, setCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { metadata, user } = useUserStore();
   const { count } = useConversationStore();
   const pathname = usePathname();
-
+ const hideMobileNav = pathname === "/dashboard/conversations";
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    setActiveOrg({
+      id: metadata?.id,
+    })
+  }, [metadata])
+
+
+  const getInitials = (name) => {
+    if (!name) return "NA";
+    return name
+      .split(' ')
+      .map((w) => w[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  }
 
   // Render a lightweight shell on the server / before hydration to avoid mismatch
   if (!mounted) {
@@ -89,11 +133,10 @@ export default function Sidebar() {
               <Link
                 key={label}
                 href={href}
-                className={`group relative flex items-center gap-3 px-2.5 py-2 rounded-lg transition-all duration-150 ${
-                  active
-                    ? "bg-white/[0.08] text-white"
-                    : "text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04]"
-                }`}
+                className={`group relative flex items-center gap-3 px-2.5 py-2 rounded-lg transition-all duration-150 ${active
+                  ? "bg-white/[0.08] text-white"
+                  : "text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04]"
+                  }`}
               >
                 {active && (
                   <motion.span
@@ -107,11 +150,10 @@ export default function Sidebar() {
                   <Icon
                     size={16}
                     strokeWidth={1.8}
-                    className={`transition-colors ${
-                      active
-                        ? "text-white"
-                        : "text-zinc-500 group-hover:text-zinc-300"
-                    }`}
+                    className={`transition-colors ${active
+                      ? "text-white"
+                      : "text-zinc-500 group-hover:text-zinc-300"
+                      }`}
                   />
                   {collapsed && label === "Conversations" && count > 0 && (
                     <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full" />
@@ -145,33 +187,38 @@ export default function Sidebar() {
         {/* Footer - User */}
         <div className="border-t border-white/[0.06] px-3 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-[11px] font-bold text-white shrink-0">
-              ON
-            </div>
             <AnimatePresence>
               {!collapsed && (
-                <motion.div
-                  initial={{ opacity: 0, x: -4 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -4 }}
-                  transition={{ duration: 0.18 }}
-                  className="flex flex-col min-w-0"
+                <button
+                  onClick={() => setOpen(true)}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition hover:bg-white/10"
                 >
-                  <span className="text-[12px] font-medium text-zinc-200 truncate leading-tight">
-                    {metadata?.business_name}
-                  </span>
-                  <span className="text-[11px] text-zinc-600 truncate leading-tight">
-                    {user?.email}
-                  </span>
-                </motion.div>
+                  <Avatar className="size-8 shrink-0">
+                    <AvatarImage src={activeOrg.logo} />
+                    <AvatarFallback
+                      className="bg-emerald-600 text-xs font-semibold text-white">
+                      {getInitials(metadata?.business_name)}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-white">
+                      {metadata?.business_name}
+                    </p>
+                    <p className="truncate text-xs text-white/50">{metadata?.owner_email}</p>
+                  </div>
+
+                  <ChevronsUpDown className="size-4 shrink-0 text-white/40" />
+                </button>
               )}
             </AnimatePresence>
           </div>
         </div>
+        <OrgSwitcher setActiveOrg={setActiveOrg} open={open} setOpen={setOpen} mockOrgs={mockOrgs} activeOrg={activeOrg} getInitials={getInitials} />
       </motion.aside>
 
       {/* ── Mobile Bottom Navigation ── */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-3 pb-4 pt-0">
+     { !hideMobileNav &&  <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-3 pb-4 pt-0">
         {/* Glass pill container */}
         <div
           className="relative flex items-center justify-around px-2 py-2 rounded-2xl"
@@ -221,9 +268,8 @@ export default function Sidebar() {
                   <Icon
                     size={18}
                     strokeWidth={active ? 2 : 1.6}
-                    className={`transition-all duration-200 ${
-                      active ? "text-white" : "text-zinc-500"
-                    }`}
+                    className={`transition-all duration-200 ${active ? "text-white" : "text-zinc-500"
+                      }`}
                   />
                   {/* Badge dot */}
                   {label === "Conversations" && count > 0 && (
@@ -237,9 +283,8 @@ export default function Sidebar() {
 
                 {/* Label */}
                 <span
-                  className={`text-[9px] font-medium tracking-wide transition-all duration-200 leading-none ${
-                    active ? "text-white" : "text-zinc-600"
-                  }`}
+                  className={`text-[9px] font-medium tracking-wide transition-all duration-200 leading-none ${active ? "text-white" : "text-zinc-600"
+                    }`}
                 >
                   {label}
                 </span>
@@ -256,7 +301,8 @@ export default function Sidebar() {
             );
           })}
         </div>
-      </nav>
+
+      </nav>}
     </>
   );
 }

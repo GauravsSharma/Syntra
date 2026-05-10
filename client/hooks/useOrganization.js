@@ -2,6 +2,7 @@ import api from "@/lib/axios";
 import { useTeamMemberStore } from "@/stores/useTeamMemberStore";
 import { useConversationStore } from "@/stores/useConversationStore";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useUserStore } from "@/stores/useUserStore";
 
 export const useTestChatbot = () => {
   return useMutation({
@@ -44,16 +45,16 @@ export const useGetMembers = () => {
   });
 };
 export const useGetConversation = (chatbotId) => {
-
+  const { setSideBarConv } = useConversationStore();
   return useQuery({
     queryKey: ["get-conversations"],
     queryFn: async () => {
       const res = await api.get(`/api/conversation/${chatbotId}`);
       const conversations = res.data.conversations; // ✅ fallback
+      setSideBarConv(conversations);
       return conversations;
     },
     enabled: !!chatbotId,
-    refetchInterval: 10000
   });
 };
 
@@ -127,5 +128,33 @@ export const useGetEscalatedConvCount = (id) => {
       return count;
     },
     enabled: !!id,
+  });
+}
+export const useSwitchOrganization = () => {
+  const { setMetadata } = useUserStore();
+  return useMutation({
+    mutationFn: async (id) => {
+      const res = await api.post(`/api/organization/switch`, { org_id: id });
+      setMetadata(res.data.organization)
+      return res.data.organization;
+    },
+  });
+}
+export const useGetMyOrganizations = () => {
+  return useQuery({
+    queryKey: ["get-my-organizations"],
+    queryFn: async () => {
+      const res = await api.get(`/api/organization/my`);
+      return res.data.organizations;
+    },
+  });
+}
+export const useGetOverview = () => {
+  return useQuery({
+    queryKey: ["get-overview"],
+    queryFn: async () => {
+      const res = await api.get(`/api/organization/overview`);
+      return res.data;
+    },
   });
 }

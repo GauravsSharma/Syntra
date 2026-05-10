@@ -66,8 +66,8 @@ console.log("Rendering Navbar");
                     ))}
                     {
                         !user && <>
-                            <div onClick={loginInUser} className='text-lg font-medium'>
-                                Sign In
+                            <div onClick={loginInUser} className='btn glass'>
+                                Login
                             </div>
                             <div onClick={loginInUser} className='btn glass'>
                                 Get Started
@@ -96,8 +96,8 @@ console.log("Rendering Navbar");
 
                 {
                     !user && <>
-                        <div onClick={loginInUser} className='text-lg font-medium'>
-                            Sign In
+                        <div onClick={loginInUser} className='btn glass'>
+                            Login
                         </div>
                         <div onClick={loginInUser} className='btn glass'>
                             Get Started
@@ -111,6 +111,7 @@ console.log("Rendering Navbar");
                 <button onClick={() => setIsOpen(false)} className='rounded-md p-2 glass'>
                     <XIcon />
                 </button>
+                
             </div >
         </>
     );

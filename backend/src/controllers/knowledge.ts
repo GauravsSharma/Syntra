@@ -5,7 +5,13 @@ import { prisma } from "../lib/prisma.js";
 export const addKnowledge = async (req: Request, res: Response) => {
     try {
         const { type } = req.body;
-
+        const role = (req as any).user.role;
+        if(role !== "admin"){
+            return res.status(403).json({
+                success: false,
+                message: "Only admins can add knowledge sources."
+            })
+        }
         if (!["website", "text", "file"].includes(type)) {
             return res.status(400).json({
                 success: false,
@@ -40,6 +46,7 @@ export const addKnowledge = async (req: Request, res: Response) => {
                     type: "file",
                     name: file.originalname,
                     status: "active",
+                    org_id: (req as any).user.organizationId,
                     content: markdown,
                     meta_data: JSON.stringify(
                         {
@@ -81,6 +88,7 @@ export const addKnowledge = async (req: Request, res: Response) => {
                     user_email: (req as any).user.email,
                     status: "active",
                     source_url: req.body.url,
+                    org_id: (req as any).user.organizationId,
                     content: summary,
                     name: req.body.url,
                 },
@@ -101,6 +109,7 @@ export const addKnowledge = async (req: Request, res: Response) => {
                     user_email: (req as any).user.email,
                     status: "active",
                     content: summary,
+                    org_id: (req as any).user.organizationId,
                     name: req.body.title || "Text Knowledge",
                 },
             });
@@ -124,7 +133,7 @@ export const addKnowledge = async (req: Request, res: Response) => {
 export const getKnowledge = async (req: Request, res: Response) => {
     try {
         const knowledgeSources = await prisma.knowledgeSource.findMany({
-            where: { user_email: (req as any).user.email },
+            where: { org_id: (req as any).user.organizationId },
             orderBy: { created_at: "desc" },
         });
         return res.status(200).json({

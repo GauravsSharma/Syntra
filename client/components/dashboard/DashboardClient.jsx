@@ -1,9 +1,9 @@
 // components/dashboard/DashboardClient.tsx — Client Component (socket + alert here)
 "use client"
 
-import { useGetUser } from "@/hooks/useUser"
+import { useGetMetaData, useGetUser } from "@/hooks/useUser"
 import socket from "@/lib/socket"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert"
 import { InfoIcon, MessageCircleWarning, X } from "lucide-react"
 import { toast } from "sonner"
@@ -11,10 +11,17 @@ import { useGetEscalatedConvCount } from "@/hooks/useOrganization"
 import { useConversationStore } from "@/stores/useConversationStore"
 
 export default function DashboardClient() {
+    useGetMetaData()
     const { data: user } = useGetUser()
     const [escalated, setEscalated] = useState(false)
-    const {incCount} = useConversationStore()
+    const {addSideBarConv} = useConversationStore()
+    const { incCount } = useConversationStore()
+    const audioRef = useRef(null);
     useGetEscalatedConvCount()
+
+    useEffect(() => {
+        audioRef.current = new Audio("/notification.mp3");
+    }, []);
 
     useEffect(() => {
         if (!user) return
@@ -22,8 +29,9 @@ export default function DashboardClient() {
         socket.connect()
         socket.emit("join:org", user.organization_id)
 
-        socket.on("new:escalation", () => {
+        socket.on("new:escalation", (data) => {
             incCount()
+            addSideBarConv(data)
             toast("User needs help", {
                 description: "A user has raised a support ticket.",
                 icon: <MessageCircleWarning className="h-4 w-4 text-amber-400" />,
@@ -33,6 +41,7 @@ export default function DashboardClient() {
                 },
                 duration: 8000, // 8 second mein auto dismiss
             })
+            audioRef?.current?.play()
         })
 
         return () => {

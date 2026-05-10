@@ -12,10 +12,10 @@ export const useAddSection = () => {
     },
   });
 };
-export const useGetSections = () => {
+export const useGetSections = (metadata) => {
     const { setSections } = useSectionStore()
     return useQuery({
-        queryKey: ["get-sections"],
+        queryKey: ["get-sections", metadata],
         queryFn: async () => {
             const res = await api.get('/api/section')
             setSections(res.data.data)

@@ -32,7 +32,7 @@ const page = () => {
 
   const { mutate, isPending: isTyping } = useChatToBot()
   const { mutate: sendMssgToAgent, isPending } = useSendMessageToAgent()
-  
+
   useEffect(() => {
     document.body.style.backgroundColor = "transparent";
     document.documentElement.style.backgroundColor = "transparent";
@@ -115,7 +115,7 @@ const page = () => {
     setInput("");
     const data = {
       messages: updatedMessages,
-      sourcesIds: [activeSection]
+      sectionId: activeSection
     }
     if (agentJoined && !escalated) {
       sendMssgToAgent({ message: userMsg, token })
@@ -184,7 +184,6 @@ const page = () => {
       setAgentName("Chat Support");
     })
     return () => {
-      socket.off("new:escalation")
       socket.disconnect()
     }
   }, [])

@@ -37,8 +37,6 @@ export const getEscalatedConversationCount = async (req: Request, res: Response)
 };
 export const getConversation = async (req: Request, res: Response) => {
     try {
-        console.log("hellllllllllllloooooooooo");
-
         const idParam = req.params.id;
         const id = Array.isArray(idParam) ? idParam[0] : idParam;
 
@@ -52,16 +50,30 @@ export const getConversation = async (req: Request, res: Response) => {
         const escalated = await prisma.conversation.findMany({
             where: {
                 chatbot_id: id,
-                status: "ESCALATED"
+                status: "ESCALATED",
             },
-            include: {
+
+            select: {
+                id: true,
+                status: true,
+                name: true,
+                created_at: true,
+
                 messages: {
-                    orderBy: {
-                        created_at: "desc", // latest first
+                    select: {
+                        content: true,
+                        created_at: true,
+                        role: true,
                     },
-                    take: 1, // only last message
+
+                    orderBy: {
+                        created_at: "desc",
+                    },
+
+                    take: 1,
                 },
             },
+
             orderBy: {
                 escalated_at: "desc",
             },
@@ -71,12 +83,24 @@ export const getConversation = async (req: Request, res: Response) => {
                 chatbot_id: id,
                 status: "OPEN"
             },
-            include: {
+            select: {
+                id: true,
+                status: true,
+                name: true,
+                created_at: true,
+
                 messages: {
-                    orderBy: {
-                        created_at: "desc", // latest first
+                    select: {
+                        content: true,
+                        created_at: true,
+                        role: true,
                     },
-                    take: 1, // only last message
+
+                    orderBy: {
+                        created_at: "desc",
+                    },
+
+                    take: 1,
                 },
             },
             orderBy: {
@@ -87,14 +111,26 @@ export const getConversation = async (req: Request, res: Response) => {
         const active = await prisma.conversation.findMany({
             where: {
                 chatbot_id: id,
-                status: "RESOLVED"
+                status: "ACTIVE"
             },
-            include: {
+            select: {
+                id: true,
+                status: true,
+                name: true,
+                created_at: true,
+
                 messages: {
-                    orderBy: {
-                        created_at: "desc", // latest first
+                    select: {
+                        content: true,
+                        created_at: true,
+                        role: true,
                     },
-                    take: 1, // only last message
+
+                    orderBy: {
+                        created_at: "desc",
+                    },
+
+                    take: 1,
                 },
             },
             orderBy: {

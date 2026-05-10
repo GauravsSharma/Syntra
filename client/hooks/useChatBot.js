@@ -19,9 +19,9 @@ export const useTestChatbot = () => {
   });
 };
 
-export const useGetChatBotMetaData = () => {
+export const useGetChatBotMetaData = (metadata) => {
     return useQuery({
-        queryKey: ["get-chatbot-metadata"],
+        queryKey: ["get-chatbot-metadata",metadata],
         queryFn: async () => {
             const res = await api.get('/api/chatbot/metadata')
             return res.data.metadata;

@@ -63,8 +63,12 @@ export const config = async (req: Request, res: Response) => {
         const chatbot = await prisma.chatBotMetadata.findUnique({
             where: { id: chatBotId, user_email: owner_email }
         })
-        const sections = await prisma.knowledgeSource.findMany({
-            where: { user_email: owner_email }
+        const sections = await prisma.section.findMany({
+            where: { userEmail: owner_email },
+            select: {
+                id: true,
+                name: true,
+            }
         })
         return res.status(200).json({
             success: true,
@@ -108,11 +112,11 @@ export const chatToBot = async (req: Request, res: Response) => {
             })
         }
 
-        let { messages, sourcesIds } = req.body;
-        if (!sourcesIds || sourcesIds.length <= 0) {
+        let { messages, sectionId } = req.body;
+        if (!sectionId) {
             return res.status(400).json({
                 success: false,
-                message: "Required knowledge sources",
+                message: "Required section ID",
             });
         }
 
@@ -163,17 +167,32 @@ export const chatToBot = async (req: Request, res: Response) => {
             })
         }
 
-        const sources = await prisma.knowledgeSource.findMany({
+        const section = await prisma.section.findUnique({
             where: {
-                id: {
-                    in: sourcesIds,
+                id: sectionId,
+            },
+
+            select: {
+                id: true,
+                tone: true,
+
+                sourceIds: {
+                    select: {
+                        id: true,
+                        content: true,
+                    },
                 },
             },
-            select: {
-                content: true,
-            },
         });
-        let context = sources.map((s) => s.content).filter(Boolean).join("\n\n");
+        console.log(section);
+        
+        if(!section){
+            return res.status(404).json({
+                success: false,
+                message: "Section not found"
+            })
+        }
+        let context = section.sourceIds.map((s) => s.content).filter(Boolean).join("\n\n");
         console.log(context);
         const tokenCount = await countConversatonToken(messages);
         if (tokenCount > 2000) {
@@ -188,7 +207,7 @@ export const chatToBot = async (req: Request, res: Response) => {
         const reply = await generateReply(context, messages);
         const { status, mssg } = parseAIResponse(reply)
         //store reply in db
-        await prisma.message.create({
+        const endMssg = await prisma.message.create({
             data: {
                 role: "assistant",
                 content: mssg,
@@ -197,8 +216,19 @@ export const chatToBot = async (req: Request, res: Response) => {
         })
         if (status === "escalated") {
             console.log("escalated tak to aya tha ");
-
-            io.to(org_id).emit("new:escalation")
+            //status, id ,name ,time ,lastmessage
+            const conv = {
+                id: sessionId,
+                status: "ESCALATED",
+                name: existingConversation?.name || "Visitor(Unknown)",
+                created_at: new Date(),
+                messages: {
+                    content: mssg,
+                    created_at: new Date(),
+                    role: "assistant",
+                },
+            }
+            io.to(org_id).emit("new:escalation", conv)
             io.to(sessionId).emit("chat:escalated")
             console.log("escalated tak to aya tha yha bhi");
             await prisma.conversation.update({

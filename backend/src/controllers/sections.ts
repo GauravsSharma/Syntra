@@ -2,6 +2,13 @@ import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 export const addSection = async (req: Request, res: Response) => {
     try {
+        const role = (req as any).user.role;
+        if(role !== "admin"){
+            return res.status(403).json({   
+                success: false,
+                message: "Only admins can add sections."
+             })
+         }
         const { name, description, data_sources, tone, allowed_topics, blocked_topics } = req.body;
         if (!name || !description || !tone) {
             return res.status(400).json({
@@ -15,17 +22,22 @@ export const addSection = async (req: Request, res: Response) => {
                 message: "At least one data source is required",
             });
         }
-        console.log(data_sources,allowed_topics);
-        
+        console.log(data_sources, allowed_topics);
+
         const section = await prisma.section.create({
             data: {
                 userEmail: (req as any).user.email,
                 name,
                 description,
                 tone,
+                org_id: (req as any).user.organizationId,
                 allowedTopics: allowed_topics || [],
                 blockedTopics: blocked_topics || [],
-                sourceIds: data_sources,
+                sourceIds: {
+                    connect: data_sources.map((id: string) => ({
+                        id,
+                    })),
+                },
                 status: "active",
             }
         });
@@ -45,7 +57,10 @@ export const addSection = async (req: Request, res: Response) => {
 export const getSections = async (req: Request, res: Response) => {
     try {
         const sections = await prisma.section.findMany({
-            where: { userEmail: (req as any).user.email },
+            where: { org_id: (req as any).user.organizationId },
+            include:{
+                sourceIds:true
+            }
         });
         return res.status(200).json({
             success: true,
@@ -64,6 +79,13 @@ export const getSections = async (req: Request, res: Response) => {
 export const deleteSection = async (req: Request, res: Response) => {
     try {
         const id = req.params.id as string;
+        const role = (req as any).user.role;
+        if(role !== "admin"){
+            return res.status(403).json({
+                success: false,
+                message: "Only admins can delete sections."
+            })
+        }
         if (!id) {
             return res.status(400).json({
                 success: false,

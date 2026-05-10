@@ -8,15 +8,16 @@ export const getMetaData = async (req: Request, res: Response) => {
         const user_email = (req as any).user.email;
         const org_id = (req as any).user.organizationId;
         console.log(org_id);
-        
+
         let existingData = await prisma.chatBotMetadata.findFirst({
-            where: { user_email }
+            where: { organization_id: org_id }
         })
 
         if (!existingData) {
             existingData = await prisma.chatBotMetadata.create({
                 data: {
-                    user_email,                    organization_id: org_id
+                    user_email,
+                    organization_id: org_id
                 }
             })
         }
@@ -37,13 +38,19 @@ export const saveChanges = async (req: Request, res: Response) => {
     try {
         const org_id = (req as any).user.organizationId;
         const user_email = (req as any).user.email;
+        const role = (req as any).user.role;
         const { color, welcomeMessage } = req.body;
+        if (role !== "admin") {
+            return res.status(403).json({
+                success: false,
+                message: "Only admins can update chat bot settings."
+            })
+        }
         const updated = await prisma.chatBotMetadata.update({
-            where: { user_email },
+            where: { user_email, organization_id: org_id },
             data: {
                 color,
                 welcome_message: welcomeMessage,
-                organization_id: org_id
             }
         })
 
@@ -63,28 +70,38 @@ export const saveChanges = async (req: Request, res: Response) => {
 
 export const testChatBot = async (req: Request, res: Response) => {
     try {
-        let { messages, knowledgeSourcsIds } = req.body;
+        let { messages, sectionId } = req.body;
 
-        if (!knowledgeSourcsIds || knowledgeSourcsIds.length <= 0) {
+        if (!sectionId) {
             return res.status(400).json({
                 success: false,
-                message: "Required knowledge sources",
+                message: "Required section",
             });
         }
 
-        const sources = await prisma.knowledgeSource.findMany({
+        const sources = await prisma.section.findUnique({
             where: {
-                id: {
-                    in: knowledgeSourcsIds,
-                },
+                id: sectionId,
             },
             select: {
-                content: true,
+                tone: true,
+                sourceIds: {
+                    select: {
+                        content: true, // sirf content field
+                    },
+                },
             },
         });
-        let context = sources.map((s) => s.content).filter(Boolean).join("\n\n");
+        console.log(sources);
+        if(!sources){
+            return res.status(404).json({
+                success: false,
+                message: "Section not found",
+            });
+        }
+        let context = sources?.sourceIds.map((s) => s.content).filter(Boolean).join("\n\n");
         console.log(context);
-
+        
         const tokenCount = await countConversatonToken(messages);
         if (tokenCount > 6000) {
             const recentMessage = messages.slice(-10);

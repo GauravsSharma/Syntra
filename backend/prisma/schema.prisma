@@ -11,16 +11,31 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
-
 model User {
-  id              String   @id @default(uuid())
-  organization_id String
-  name            String?
-  email           String   @unique
-  image           String?
-  created_at      DateTime @default(now())
+  id        String   @id @default(uuid())
+
+  name      String?
+  email     String   @unique
+  image     String?
+
+  created_at DateTime @default(now())
+
+  organizations Organization[]
 }
 
+model Organization {
+  id              String   @id @default(uuid())
+
+  owner_id        String
+  owner           User @relation(fields: [owner_id], references: [id], onDelete: Cascade)
+  owner_email     String?
+  business_name   String?
+  website_url     String?
+  external_links  String?
+  image           String?
+  isPersonal      Boolean @default(false)
+  created_at      DateTime @default(now())
+}
 model Metadata {
   id             String   @id @default(uuid())
   user_email     String   @unique
@@ -39,6 +54,8 @@ model KnowledgeSource {
   source_url   String?
   content      String?
   meta_data    Json?
+  org_id       String
+  sections      Section[]
   last_updated DateTime @default(now())  
   created_at   DateTime @default(now())
 }
@@ -48,7 +65,8 @@ model Section {
   userEmail     String   @map("user_email")
   name          String
   description   String
-  sourceIds     String[] @map("source_ids")
+  org_id       String
+  sourceIds     KnowledgeSource[]
   tone          String
   allowedTopics String[] @default([]) @map("allowed_topics")
   blockedTopics String[] @default([]) @map("blocked_topics")
@@ -111,13 +129,4 @@ model Message {
   created_at      DateTime     @default(now())
 
   conversation    Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
-}
-
-model Widget {
-  id              String   @id @default(uuid())
-  organization_id String
-  name            String
-  allowed_domains String[]
-  status          String   @default("active")
-  created_at      DateTime @default(now())
 }

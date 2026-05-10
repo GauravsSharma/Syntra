@@ -46,7 +46,7 @@ export const validateScalekitCallback = async (req: Request, res: Response) => {
         const authResult = await scalekit.authenticateWithCode(code, redirectUri);
         const { user, idToken } = authResult
         const claims = await scalekit.validateToken(idToken);
-        const organizationId =
+        let organizationId =
             (claims as any).organization_id ||
             (claims as any).org_id ||
             (claims as any).oid ||
@@ -56,19 +56,33 @@ export const validateScalekitCallback = async (req: Request, res: Response) => {
             where: { email: user.email }
         })
         if (!userr) {
-            console.log("ayiiiiii");
-            await prisma.user.create({
+            const new_user = await prisma.user.create({
                 data: {
                     email: user.email,
                     name: user.name,
-                    organization_id: organizationId,
                 }
             })
+            const existingOrg = await prisma.organization.findFirst({
+                where: { owner_email: user.email }
+            })
+            if (!existingOrg) {
+                const org = await scalekit.organization.createOrganization(user.email);
+                organizationId = org.organization?.id;
+                await prisma.organization.create({
+                    data: {
+                        id: organizationId,
+                        owner_id: new_user.id,
+                        isPersonal:true,
+                        owner_email: user.email,
+                    }
+                })
+            }
         }
 
         const userSession = {
             email: user.email,
             organization_id: organizationId,
+            role: "admin"
         }
 
         res.cookie("user_session", JSON.stringify(userSession), {
@@ -81,6 +95,8 @@ export const validateScalekitCallback = async (req: Request, res: Response) => {
 
         res.redirect(process.env.CLIENT_URL!);
     } catch (error) {
+        console.log(error);
+
         res.status(500).json({ message: "Authentication failed", error })
     }
 }
@@ -97,7 +113,6 @@ export const getUserInfo = async (req: Request, res: Response) => {
             select: {
                 email: true,
                 name: true,
-                organization_id: true,
             }
         });
         return res.status(200).json({ user: userInfo });
@@ -109,17 +124,21 @@ export const getUserInfo = async (req: Request, res: Response) => {
 export const addMetadata = async (req: Request, res: Response) => {
     try {
         const user = (req as any).user;
+
         const { businessName, websiteUrl, externalLinks } = req.body;
         if (!businessName || !websiteUrl) {
             return res.status(400).json({ message: "Missing required fields" });
         }
-        const metaData = await prisma.metadata.create({
+
+        const metaData = await prisma.organization.update({
+            where: { id: user.organizationId },
             data: {
                 business_name: businessName,
                 website_url: websiteUrl,
                 external_links: externalLinks,
-                user_email: user.email,
+                owner_email: user.email,
             }
+
         })
         res.cookie("user_metadata", JSON.stringify(metaData), {
 
@@ -134,6 +153,8 @@ export const addMetadata = async (req: Request, res: Response) => {
         return res.status(200).json({ message: "Metadata added successfully", metaData });
     }
     catch (error) {
+        console.log(error);
+
         res.status(500).json({ message: "Failed to add metadata", error })
     }
 }
@@ -143,20 +164,20 @@ export const getMetadata = async (req: Request, res: Response) => {
         const user = (req as any).user;
         const cookie = req.cookies.user_metadata;
         if (cookie) {
-            return res.status(200).json({ source:"cache", metadata: JSON.parse(cookie) });
+            return res.status(200).json({ source: "cache", metadata: JSON.parse(cookie) });
         }
-        const metadata = await prisma.metadata.findUnique({
-            where: { user_email: user.email },
+        const metadata = await prisma.organization.findUnique({
+            where: { id: user.organizationId },
             select: {
                 business_name: true,
                 website_url: true,
                 external_links: true,
             }
         })
-        if (!metadata) {
+        if (!metadata || !metadata.business_name || !metadata.website_url) {
             return res.status(404).json({ message: "Metadata not found" });
         }
-           res.cookie("user_metadata", JSON.stringify(metadata), {
+        res.cookie("user_metadata", JSON.stringify(metadata), {
 
             httpOnly: true,
             sameSite: "lax",
@@ -164,11 +185,13 @@ export const getMetadata = async (req: Request, res: Response) => {
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
             path: "/",
         });
-        return res.status(200).json({ 
-            source:"database", 
+        return res.status(200).json({
+            source: "database",
             metadata
         });
     } catch (error) {
+        console.log(error);
+
         res.status(500).json({ message: "Failed to get metadata", error })
     }
 }
