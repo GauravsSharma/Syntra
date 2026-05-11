@@ -10,10 +10,13 @@ import sectionRouter from './routes/sections-route.js';
 import organizationRouter from './routes/organization-route.js';
 import webhooks from './routes/webhook-route.js';
 import widget from './routes/chatbot-config-route.js';
+import plans from './routes/plans-route.js';
 import conversationRouter from './routes/conversation-route.js';
 import cookieParser from "cookie-parser";
 import dotenv from 'dotenv';
 import { jwtVerify } from 'jose';
+
+
 
 dotenv.config();
 
@@ -81,6 +84,7 @@ app.use("/api/chatBot", chatBotRouter)
 app.use("/api/organization", organizationRouter)
 app.use("/webhooks", webhooks)
 app.use("/api/widget", widget)
+app.use("/api/plans", plans)
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello, TypeScript Express!');

@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import crypto from "crypto";
 import scalekit from '../config/scalkit.js';
 import { prisma } from '../lib/prisma.js';
+import { subscribe } from 'diagnostics_channel';
 
 export const generateRedirectUrl = async (req: Request, res: Response) => {
     try {
@@ -67,15 +68,34 @@ export const validateScalekitCallback = async (req: Request, res: Response) => {
             })
             if (!existingOrg) {
                 const org = await scalekit.organization.createOrganization(user.email);
+
                 organizationId = org.organization?.id;
+
+                const currentPeriodEnd = new Date();
+                currentPeriodEnd.setFullYear(
+                    currentPeriodEnd.getFullYear() + 1
+                );
                 await prisma.organization.create({
                     data: {
                         id: organizationId,
                         owner_id: new_user.id,
-                        isPersonal:true,
+                        isPersonal: true,
                         owner_email: user.email,
+                        plan: "FREE",
+
+                        usage: {
+                            create: {}
+                        },
+
+                        subscription: {
+                            create: {
+                                status: "ACTIVE",
+                                current_period_start: new Date(),
+                                current_period_end: currentPeriodEnd
+                            }
+                        }
                     }
-                })
+                });
             }
         }
 

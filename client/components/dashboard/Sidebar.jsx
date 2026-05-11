@@ -12,6 +12,7 @@ import {
   Inbox,
   Settings,
   ChevronsUpDown,
+  CreditCard,
 } from "lucide-react";
 import { useUserStore } from "@/stores/useUserStore";
 import { useConversationStore } from "@/stores/useConversationStore";
@@ -26,6 +27,7 @@ const navItems = [
   { label: "Chatbot", icon: MessageSquare, href: "/dashboard/chatbot" },
   { label: "Conversations", icon: Inbox, href: "/dashboard/conversations" },
   { label: "Settings", icon: Settings, href: "/dashboard/settings" },
+  { label: "Billing", icon: CreditCard, href: "/dashboard/billing" },
 ];
 const mockOrgs = [
   {

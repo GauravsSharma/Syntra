@@ -30,10 +30,13 @@
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
     "@scalekit-sdk/node": "^2.5.1",
+    "axios": "^1.16.0",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",
     "jose": "^6.2.2",
+    "openai": "^6.37.0",
     "pg": "^8.20.0",
+    "razorpay": "^2.9.6",
     "socket.io": "^4.8.3"
   }
 }

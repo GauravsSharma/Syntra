@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
-import { summarizeMarkdown } from "../utils/ai.js";
+
 import { prisma } from "../lib/prisma.js";
+import { summarizeMarkdown } from "../utils/a12.js";
 
 export const addKnowledge = async (req: Request, res: Response) => {
     try {
