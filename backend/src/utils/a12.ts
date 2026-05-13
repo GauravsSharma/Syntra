@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import dotenv from "dotenv";
 import { summarizeMarkdownPrompt } from "./prompts";
+import { ConversationStatus, Message } from "../../generated/prisma/client";
 
 dotenv.config();
 
@@ -24,7 +25,7 @@ export async function summarizeMarkdown(markdown: string) {
         },
       ],
       temperature: 0.1,
-      max_tokens: 900,
+      max_tokens: 500,
     });
     console.log(completion.choices[0].message.content?.trim() ?? "");
     
@@ -34,3 +35,184 @@ export async function summarizeMarkdown(markdown: string) {
     throw error;
   }
 }
+
+export async function summarizeConversation(messages: any[]) {
+  try {
+    const formatted = messages
+      .map((m) => `${m.role}: ${m.content}`)
+      .join("\n");
+
+    const prompt = `
+You are a summarization assistant.
+
+Summarize the following conversation.
+- Maximum length: 1000 words
+- Keep key facts, decisions, and user intent
+- Remove filler, greetings, and repetition
+- Be clear and structured
+
+Conversation:
+${formatted}
+`;
+
+    const completion = await client.chat.completions.create({
+      model: "meta/llama-3.1-8b-instruct",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a helpful conversation summarization assistant.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      temperature: 0.3,
+      max_tokens: 500,
+    });
+
+    return completion.choices[0].message.content?.trim() ?? "";
+  } catch (error) {
+    console.error("Error in summarizeConversation:", error);
+    throw error;
+  }
+}
+export const generateReply = async (
+    context: string,
+  recentMessages: Message[],
+  status: ConversationStatus,
+  escalation_count:number
+) => {
+  try {
+    console.log("dekho m aya tha");
+    
+    const completion = await client.chat.completions.create({
+      model: "meta/llama-3.1-8b-instruct",
+      messages: [
+        {
+          role: "system",
+          content: `You are Sarah, a friendly customer support specialist.
+
+OUTPUT FORMAT — STRICT JSON ONLY:
+{"status":"OPEN"|"ESCALATED"|"EXPIRED","mssg":"your reply","user_email":null|"<email>"}
+
+DO NOT return anything outside JSON. No extra text. No markdown.
+
+RULES:
+- Max 1-2 sentences per reply.
+- Answer ONLY from the knowledge base below.
+- If unclear → ask a short clarifying question.
+
+---
+
+CURRENT CHAT STATE: ${status}
+ESCALATION ATTEMPTS: ${escalation_count}
+
+---
+
+FLOW:
+
+## Normal flow (status = OPEN):
+- If answer found in knowledge base:
+  {"status":"OPEN","mssg":"<helpful reply>","user_email":null}
+
+- If answer NOT found AND escalation_count < 1:
+{"status":"OPEN","mssg":"I don't have that info right now. Would you like me to raise a support ticket?","user_email":null}
+
+- If answer NOT found AND escalation_count >= 1:
+  {"status":"OPEN","mssg":"I'm sorry, I still don't have that information. Please try contacting support directly.","user_email":null}
+
+- If user says YES to ticket:
+  {"status":"ESCALATED","mssg":"I've raised a support ticket. Our team will join shortly. Please wait!","user_email":null}
+
+## Expired flow (status = EXPIRED):
+- Ask for email:
+  {"status":"EXPIRED","mssg":"Sorry, no agent was available. Could you please share your email so our team can follow up with you?","user_email":null}
+
+- If user provides a valid email:
+  {"status":"EXPIRED","mssg":"Thank you! Our team will contact you shortly.","user_email":"<valid_email>"}
+
+- If email is invalid:
+  {"status":"EXPIRED","mssg":"That doesn't look like a valid email. Could you please re-enter it?","user_email":null}
+
+---
+
+Knowledge Base:
+${context}`,
+        },
+        ...recentMessages.map((m) => ({
+          role:
+          m.role === "assistant"
+          ? ("assistant" as const)
+              : ("user" as const),
+          content: m.content,
+        })),
+      ],
+      temperature: 0.35,
+      max_tokens: 200,
+    });
+
+    console.log("Or mene reply bhi dia");
+    return completion.choices[0].message.content?.trim() ?? "";
+  } catch (error) {
+    console.error("Error in generateReply:", error);
+    throw error;
+  }
+};
+export const generateReplyForTesting = async (
+  context: string,
+  recentMessages: Message[]
+) => {
+  try {
+    const completion = await client.chat.completions.create({
+      model: "meta/llama-3.1-8b-instruct",
+     messages: [
+  {
+    role: "system",
+    content:` You are Sarah, a friendly customer support specialist.
+
+OUTPUT FORMAT (STRICT JSON ONLY):
+You MUST ALWAYS reply in this exact format:
+{"status":"active"|"escalated","mssg":"your reply"}
+
+DO NOT return anything outside JSON.
+DO NOT add extra text.
+
+RULES:
+- Max 1–2 sentences.
+- If unclear → ask a short question.
+- Answer ONLY from knowledge base.
+
+ESCALATION:
+- If info NOT found:
+  Answer with:"I don't have that info right now. Would you like me to raise a support ticket?"
+
+- If user says yes:
+  {"status":"escalated","mssg":"I've raised a support ticket. Our team will reach out to you soon!"}
+
+- Otherwise:
+  {"status":"active","mssg":"<short helpful reply>"}
+
+Knowledge Base:
+${context}
+`,
+  },
+  ...recentMessages.map((m) => ({
+    role:
+      m.role === "assistant"
+        ? ("assistant" as const)
+        : ("user" as const),
+    content: m.content,
+  })),
+],
+      temperature: 0.35,
+      max_tokens: 200,
+    });
+
+    return completion.choices[0].message.content?.trim() ?? "";
+  } catch (error) {
+    console.error("Error in generateReply:", error);
+    throw error;
+  }
+};

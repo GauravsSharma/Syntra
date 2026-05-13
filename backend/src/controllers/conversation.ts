@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { jwtVerify } from "jose";
 import { io } from "..";
+import { cancelEscalationTimeout } from "../utils/escalationTimer";
 
 export const getEscalatedConversationCount = async (req: Request, res: Response) => {
     try {
@@ -138,7 +139,7 @@ export const getConversation = async (req: Request, res: Response) => {
             },
             take: 10
         });
-        console.log(escalated, active);
+      
 
 
         return res.status(200).json({
@@ -202,6 +203,7 @@ export const updateConversationStatus = async (req: Request, res: Response) => {
                 message: "Given unknown status.",
             });
         }
+
         const user = await prisma.user.findUnique({
             where: { email: user_email },
 
@@ -212,6 +214,32 @@ export const updateConversationStatus = async (req: Request, res: Response) => {
                 message: "User not found.",
             });
         }
+        const conversation = await prisma.conversation.findUnique({
+            where: { id },
+            select: {
+                escalated_at: true
+            }
+        });
+
+        if (!conversation?.escalated_at) {
+            return res.status(400).json({
+                success: false,
+                message: "Conversation not found or not escalated"
+            });
+        }
+
+        const diff =
+            Date.now() - new Date(conversation.escalated_at).getTime();
+
+        const TEN_MINUTES = 10 * 60 * 1000;
+
+        if (diff > TEN_MINUTES) {
+            return res.status(400).json({
+                success: false,
+                message: "Status update time expired"
+            });
+        }
+        // continue update logic
         await prisma.conversation.update({
             where: {
                 id: id,
@@ -228,10 +256,11 @@ export const updateConversationStatus = async (req: Request, res: Response) => {
                 user_name: user.name
             })
         }
-
+        
         if (status === "RESOLVED") {
             io.to(id).emit("chat:resolved")
         }
+         cancelEscalationTimeout(id)
         return res.status(200).json({
             success: true,
             message: "Conversation status updated",
@@ -284,7 +313,7 @@ export const getClientConversation = async (req: Request, res: Response) => {
 }
 export const sendMessageToAgent = async (req: Request, res: Response) => {
     try {
-        console.log("sknsksnknsknskdnsdn");
+
 
         const authHeader = req.headers.authorization;
         const token = authHeader && authHeader.split(" ")[1] as string;
@@ -298,6 +327,8 @@ export const sendMessageToAgent = async (req: Request, res: Response) => {
         const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
         const { payload } = await jwtVerify(token, secret)
         sessionId = payload.sessionId as string
+        console.log("sesssesssseeidddd",sessionId);
+        
         const { message } = req.body;
         if (!message) {
             return res.status(404).json({
@@ -348,6 +379,8 @@ export const sendMessageToUser = async (req: Request, res: Response) => {
                 message: "Missing message."
             })
         }
+        console.log(id);
+        
         io.to(id).emit("new:message", {
             role: "agent",
             content: message
@@ -369,4 +402,36 @@ export const sendMessageToUser = async (req: Request, res: Response) => {
             message: "Error in sending mssg."
         })
     }
+}
+
+export const expireConversation = async(req: Request, res: Response)=>{
+ try {
+    const {token} = req.body;
+       if (!token) {
+        console.log("token nai mila");
+        return;
+      }
+      let sessionId: string | undefined;
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
+      const { payload } = await jwtVerify(token, secret)
+      sessionId = payload.sessionId as string
+      console.log("session id", sessionId);
+      await prisma.conversation.update({
+        where: { id: sessionId },
+        data: {
+          status: "EXPIRED"
+        }
+      })
+       return res.status(200).json({
+            success: true,
+            message: "status updated"
+        })
+ } catch (error) {
+    console.log(error);
+    
+  return res.status(500).json({
+            success: true,
+            message: "Error in expiring cnversation."
+        })   
+ }
 }

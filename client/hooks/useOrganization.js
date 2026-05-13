@@ -79,6 +79,14 @@ export const useUpdateOcnversationStatus = () => {
     },
   });
 }
+export const useExpireConversation = () => {
+  return useMutation({
+    mutationFn: async (token) => {
+      const res = await api.patch(`/api/conversation/update`, {token});
+      return res.data.message;
+    },
+  });
+}
 export const useSendMessageToAgent = () => {
   return useMutation({
     mutationFn: async ({ message, token }) => {

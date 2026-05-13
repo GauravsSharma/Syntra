@@ -5,8 +5,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useChatToBot } from '@/hooks/useChatBot';
 import { useGetChatbotConfig } from '@/hooks/useChatBotConfig';
-import { useGetClientConversationById, useSendMessageToAgent } from '@/hooks/useOrganization';
-import socket from '@/lib/socket';
+import { useExpireConversation, useGetClientConversationById, useSendMessageToAgent } from '@/hooks/useOrganization';
+import {widgetSocket} from '@/lib/widgetSocket';
 import { cn } from '@/lib/utils';
 import { AlertCircle, Bot, Loader2, MessageCircle, RefreshCw, Send, UserRound, X } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
@@ -29,10 +29,10 @@ const page = () => {
   const [input, setInput] = useState("");
   const [activeSection, setActiveSection] = useState(null);
   const scrollViewportRef = useRef(null);
-
+  const [userEmail, setUserEmail] = useState(null)
   const { mutate, isPending: isTyping } = useChatToBot()
   const { mutate: sendMssgToAgent, isPending } = useSendMessageToAgent()
-
+  const { mutate: expireChat, isPending: isExpiring } = useExpireConversation()
   useEffect(() => {
     document.body.style.backgroundColor = "transparent";
     document.documentElement.style.backgroundColor = "transparent";
@@ -158,33 +158,38 @@ const page = () => {
 
   useEffect(() => {
     if (!token) return;
-    socket.connect()
-    socket.emit("conversation:join", token);
-    socket.on("chat:escalated", () => {
+    widgetSocket.connect()
+    widgetSocket.emit("conversation:join", token);
+    widgetSocket.on("chat:escalated", () => {
       setEscalated(true);
     })
-    socket.on("agent:joined", ({ status, user_name }) => {
+    widgetSocket.on("agent:joined", ({ status, user_name }) => {
       if (status === "active") {
         setEscalated(false);
         setAgentName(user_name)
         setAgentJoined(true);
       }
     })
-    socket.on("new:message", (data) => {
+    widgetSocket.on("new:message", (data) => {
       if (data.role === "agent") {
         setMessages((prev) => [...prev, {
           role: "agent",
           content: data.content
         }])
       }
-
     })
-    socket.on("chat:resolved", () => {
+    widgetSocket.on("chat:resolved", () => {
       setAgentJoined(false);
       setAgentName("Chat Support");
     })
+    widgetSocket.on("chat:expired", (data) => {
+      setMessages((prev) => [
+        ...prev,
+        data
+      ]);
+    })
     return () => {
-      socket.disconnect()
+      widgetSocket.disconnect()
     }
   }, [])
 
@@ -232,7 +237,7 @@ const page = () => {
     );
   }
   const handleTimeOut = () => {
-
+    setEscalated(false)
   }
   return (
     <div className="flex flex-col h-[520px] mih-h-0 rounded-xl border border-border bg-card overflow-hidden">

@@ -1,13 +1,15 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
-import { countConversatonToken, generateReply, summarizeConversation } from "../utils/ai";
+import { countConversatonToken } from "../utils/ai";
 import { parseAIResponse } from "../utils/help";
+import { generateReplyForTesting, summarizeConversation } from "../utils/a12";
+import { countMessageTokens } from "../utils/token";
 
 export const getMetaData = async (req: Request, res: Response) => {
     try {
         const user_email = (req as any).user.email;
         const org_id = (req as any).user.organizationId;
-        console.log(org_id);
+     
 
         let existingData = await prisma.chatBotMetadata.findFirst({
             where: { organization_id: org_id }
@@ -102,8 +104,8 @@ export const testChatBot = async (req: Request, res: Response) => {
         let context = sources?.sourceIds.map((s) => s.content).filter(Boolean).join("\n\n");
         console.log(context);
         
-        const tokenCount = await countConversatonToken(messages);
-        if (tokenCount > 6000) {
+        const tokenCount = countMessageTokens(messages);
+        if (tokenCount > 600) {
             const recentMessage = messages.slice(-10);
             const olderMessage = messages.slice(0, -10);
             if (olderMessage.length > 0) {
@@ -112,7 +114,7 @@ export const testChatBot = async (req: Request, res: Response) => {
                 messages = recentMessage;
             }
         }
-        const reply = await generateReply(context, messages);
+        const reply = await generateReplyForTesting(context, messages);
         const { mssg } = parseAIResponse(reply)
         return res.status(200).json({
             success: true,

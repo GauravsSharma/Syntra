@@ -12,7 +12,8 @@ import {
 import { Loader2, MessageCircle, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import socket from "../../lib/socket";
+import {dashboardSocket} from "../../lib/dashboardSocket"
+
 import { useConversationStore } from "@/stores/useConversationStore";
 
 export function ConversationView({
@@ -69,21 +70,23 @@ export function ConversationView({
   };
 
   useEffect(() => {
-    socket.on("new:message", (data) => {
+    dashboardSocket.on("new:message", (data) => {
+      console.log(data);
+      
       if (data.role === "user") {
         setMessages((prev) => [...prev, { role: "user", content: data.content }]);
       }
     });
     return () => {
-      socket.off("new:message");
+      dashboardSocket.off("new:message");
     };
   }, []);
 
   useEffect(() => {
-    if (!isactive || !socket) return;
-    socket.emit("join:conversation", selectedId);
+    if (!isactive || !dashboardSocket) return;
+    dashboardSocket.emit("join:conversation", selectedId);
     return () => {
-      socket.off("join:conversation");
+      dashboardSocket.off("join:conversation");
     };
   }, [isactive]);
 

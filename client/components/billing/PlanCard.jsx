@@ -23,7 +23,7 @@ export default function PlanCard({
     handleUpgrade,
     isPending
 }) {
-  
+
     const Icon = pro
         ? Crown
         : active
@@ -132,33 +132,33 @@ export default function PlanCard({
                 ))}
             </div>
 
-         <Button
-  onClick={handleUpgrade}
-  disabled={active || name === "Free" || isPending}
-  className={`
+            <Button
+                onClick={() => handleUpgrade(name)}
+                disabled={active || name === "Free" || isPending}
+                className={`
     w-full mt-8 rounded-xl
     ${active
-      ? "bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20"
-      : pro
-      ? "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
-      : ""
-    }
+                        ? "bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20"
+                        : pro
+                            ? "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+                            : ""
+                    }
   `}
-  variant={active || pro ? "secondary" : "outline"}
->
-  {isPending ? (
-    <div className="flex items-center gap-2">
-      <Loader2 className="h-4 w-4 animate-spin" />
-      Creating Order...
-    </div>
-  ) : active ? (
-    "Current Plan"
-  ) : pro ? (
-    "Upgrade"
-  ) : (
-    "Get Started"
-  )}
-</Button>
+                variant={active || pro ? "secondary" : "outline"}
+            >
+                {isPending ? (
+                    <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Creating Order...
+                    </div>
+                ) : active ? (
+                    "Current Plan"
+                ) : pro ? (
+                    "Upgrade"
+                ) : (
+                    "Get Started"
+                )}
+            </Button>
         </Card>
     );
 }

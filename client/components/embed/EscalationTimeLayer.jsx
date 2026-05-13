@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 
 function EscalationOverlay({ escalated, onTimeout }) {
-  const [timeLeft, setTimeLeft] = useState(600); // 10 min = 600 sec
+  const [timeLeft, setTimeLeft] = useState(60); // 10 min = 600 sec
 
   useEffect(() => {
     if (!escalated) return;
 
-    setTimeLeft(600); // reset every time escalated becomes true
+    setTimeLeft(60); // reset every time escalated becomes true
 
     const interval = setInterval(() => {
       setTimeLeft((prev) => {

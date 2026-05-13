@@ -3,9 +3,11 @@ import { useKnowledgeStore } from "@/stores/useKnowledgeStore";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 export const useAddKnowledge = () => {
+  const { addSource } = useKnowledgeStore();
   return useMutation({
     mutationFn: async (data) => {
       const res = await api.post("/api/knowledge", data);
+      addSource(res.data.source);
       return res.data;
     },
   });

@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import https from "https";
+import { ConversationStatus } from "../../generated/prisma/client";
 
 interface Message{
     role: "user"|"assistant",
@@ -95,6 +96,7 @@ ${formatted}
         throw error;
     }
 }
+
 export async function countTokens(text: string) {
     const model = genAI.getGenerativeModel({
         model: "gemini-2.5-flash-lite"
@@ -124,38 +126,60 @@ export const countConversatonToken = async (
 
 export const generateReply = async (
   context: string,
-  recentMessages: Message[]
+  recentMessages: Message[],
+  status: ConversationStatus,
+  escalation_count:number
 ) => {
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash-lite",
-systemInstruction: `
-You are Sarah, a friendly customer support specialist.
+    model: "gemini-2.5-flash",
+systemInstruction: `You are Sarah, a friendly customer support specialist.
 
-OUTPUT FORMAT (STRICT JSON ONLY):
-You MUST ALWAYS reply in this exact format:
-{"status":"active"|"escalated","mssg":"your reply"}
+OUTPUT FORMAT — STRICT JSON ONLY:
+{"status":"OPEN"|"ESCALATED"|"EXPIRED","mssg":"your reply","user_email":null|"<email>"}
 
-DO NOT return anything outside JSON.
-DO NOT add extra text.
+DO NOT return anything outside JSON. No extra text. No markdown.
 
 RULES:
-- Max 1–2 sentences.
-- If unclear → ask a short question.
-- Answer ONLY from knowledge base.
+- Max 1-2 sentences per reply.
+- Answer ONLY from the knowledge base below.
+- If unclear → ask a short clarifying question.
 
-ESCALATION:
-- If info NOT found:
-  {"status":"open","mssg":"I don't have that info right now. Would you like me to raise a support ticket?"}
+---
 
-- If user says yes:
-  {"status":"escalated","mssg":"I've raised a support ticket. Our team will reach out to you soon!"}
+CURRENT CHAT STATE: ${status}
+ESCALATION ATTEMPTS: ${escalation_count}
 
-- Otherwise:
-  {"status":"active","mssg":"<short helpful reply>"}
+---
+
+FLOW:
+
+## Normal flow (status = OPEN):
+- If answer found in knowledge base:
+  {"status":"OPEN","mssg":"<helpful reply>","user_email":null}
+
+- If answer NOT found AND escalation_count < 1:
+  {"status":"OPEN","mssg":"I don't have that info right now. Would you like me to raise a support ticket?","user_email":null}
+
+- If answer NOT found AND escalation_count >= 1:
+  {"status":"OPEN","mssg":"I'm sorry, I still don't have that information. Please try contacting support directly.","user_email":null}
+
+- If user says YES to ticket:
+  {"status":"ESCALATED","mssg":"I've raised a support ticket. Our team will join shortly. Please wait!","user_email":null}
+
+## Expired flow (status = EXPIRED):
+- Ask for email:
+  {"status":"EXPIRED","mssg":"Sorry, no agent was available. Could you please share your email so our team can follow up with you?","user_email":null}
+
+- If user provides a valid email:
+  {"status":"EXPIRED","mssg":"Thank you! Our team will contact you shortly.","user_email":"<valid_email>"}
+
+- If email is invalid:
+  {"status":"EXPIRED","mssg":"That doesn't look like a valid email. Could you please re-enter it?","user_email":null}
+
+---
 
 Knowledge Base:
-${context}
-`
+${context}`
   });
 
   const result = await model.generateContent({

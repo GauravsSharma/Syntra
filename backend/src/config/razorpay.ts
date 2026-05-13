@@ -5,5 +5,5 @@ dotenv.config();
 
 export let rozarPayInstance = new Razorpay({
     key_id: process.env.ROZARPAY_API_KEY,
-    key_secret: process.env.ROZARPAY_SECRET,
+    key_secret: process.env.RAZARPAY_SECRET,
 });

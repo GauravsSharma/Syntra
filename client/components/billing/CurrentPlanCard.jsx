@@ -8,6 +8,7 @@ import {
   MessageCircle,
   ArrowRight,
 } from "lucide-react";
+import { formatDate } from "@/lib/help";
 
 export default function CurrentPlanCard({ currentPlan }) {
   return (
@@ -88,7 +89,7 @@ export default function CurrentPlanCard({ currentPlan }) {
       <div className="flex items-center justify-between border-t border-zinc-900 mt-6 pt-4">
 
         <p className="text-xs text-zinc-500">
-          Next billing cycle: June 11, 2026
+          Next billing cycle: {formatDate(currentPlan.current_period_end)}
         </p>
 
         <Button

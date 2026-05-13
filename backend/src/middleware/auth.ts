@@ -20,7 +20,6 @@ export const authMiddleware = (
       role: parsed.role || "admin",
       organizationId: parsed.organization_id || null,
     };
-console.log(parsed.role);
 
     next();
   } catch (error) {

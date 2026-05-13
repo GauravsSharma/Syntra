@@ -15,6 +15,8 @@ import conversationRouter from './routes/conversation-route.js';
 import cookieParser from "cookie-parser";
 import dotenv from 'dotenv';
 import { jwtVerify } from 'jose';
+import { prisma } from './lib/prisma.js';
+import { sendEmail } from './utils/help.js';
 
 
 
@@ -36,6 +38,8 @@ export const io = new Server(httpServer, {
 io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id);
   socket.on("join:org", (orgId) => {
+    console.log(orgId);
+    
     socket.join(orgId);
 
     const isJoined = socket.rooms.has(orgId);
@@ -44,7 +48,7 @@ io.on('connection', (socket) => {
   })
 
   socket.on("conversation:join", async (token) => {
-    
+
     if (!token) {
       console.log("token nai mila");
       return;
@@ -58,7 +62,43 @@ io.on('connection', (socket) => {
     socket.join(sessionId)
   })
 
-  socket.on("join:conversation",(conversationId)=>{
+  socket.on("escalation:expire", async (token: string) => {
+    try {
+      if (!token) {
+        console.log("token nai mila");
+        return;
+      }
+
+      let sessionId: string | undefined;
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
+      const { payload } = await jwtVerify(token, secret)
+      sessionId = payload.sessionId as string
+      console.log("session id", sessionId);
+      const conv = await prisma.conversation.findUnique({
+        where: { id: sessionId },
+        select: {
+          org_id: true
+        }
+      })
+      const org = await prisma.organization.findUnique({
+        where: { id: conv?.org_id },
+        select: {
+          owner_email: true
+        }
+      })
+      if (!org?.owner_email) {
+        return;
+      }
+      sendEmail(org?.owner_email, org.owner_email).then(() => {
+        console.log("email send vro");
+      })
+    } catch (error) {
+      console.log("Email sending error", error);
+
+    }
+  })
+
+  socket.on("join:conversation", (conversationId) => {
     socket.join(conversationId)
   })
 

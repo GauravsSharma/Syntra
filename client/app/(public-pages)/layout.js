@@ -19,9 +19,9 @@ export default function Layout({ children }) {
   
     return (
         <div className={`${inter.className}`}>
-            <Navbar />
+            
             {children}
-            <Footer />
+            {/* <Footer /> */}
         </div>
     );
 }

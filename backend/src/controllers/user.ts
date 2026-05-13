@@ -56,47 +56,44 @@ export const validateScalekitCallback = async (req: Request, res: Response) => {
         const userr = await prisma.user.findUnique({
             where: { email: user.email }
         })
+
         if (!userr) {
             const new_user = await prisma.user.create({
                 data: {
                     email: user.email,
-                    name: user.name,
+                    name: user.name || user.givenName,
                 }
             })
-            const existingOrg = await prisma.organization.findFirst({
-                where: { owner_email: user.email }
-            })
-            if (!existingOrg) {
+            // yha check kaaro isAdmin
+            const roles = (claims as any).roles || [];
+            const isAdmin = roles.includes("admin");
+            if(!isAdmin){
                 const org = await scalekit.organization.createOrganization(user.email);
-
                 organizationId = org.organization?.id;
+            }
+            const currentPeriodEnd = new Date();
+            currentPeriodEnd.setFullYear(
+                currentPeriodEnd.getFullYear() + 1
+            );
+            await prisma.organization.create({
+                data: {
+                    id: organizationId,
+                    owner_id: new_user.id,
+                    isPersonal: true,
+                    owner_email: user.email,
+                    usage: {
+                        create: {}
+                    },
 
-                const currentPeriodEnd = new Date();
-                currentPeriodEnd.setFullYear(
-                    currentPeriodEnd.getFullYear() + 1
-                );
-                await prisma.organization.create({
-                    data: {
-                        id: organizationId,
-                        owner_id: new_user.id,
-                        isPersonal: true,
-                        owner_email: user.email,
-                        plan: "FREE",
-
-                        usage: {
-                            create: {}
-                        },
-
-                        subscription: {
-                            create: {
-                                status: "ACTIVE",
-                                current_period_start: new Date(),
-                                current_period_end: currentPeriodEnd
-                            }
+                    subscription: {
+                        create: {
+                            current_period_start: new Date(),
+                            current_period_end: currentPeriodEnd
                         }
                     }
-                });
-            }
+                }
+            });
+
         }
 
         const userSession = {
@@ -133,6 +130,7 @@ export const getUserInfo = async (req: Request, res: Response) => {
             select: {
                 email: true,
                 name: true,
+
             }
         });
         return res.status(200).json({ user: userInfo });

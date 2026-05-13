@@ -1,14 +1,15 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
+import { PLANS } from "../data/pricing";
 export const addSection = async (req: Request, res: Response) => {
     try {
         const role = (req as any).user.role;
-        if(role !== "admin"){
-            return res.status(403).json({   
+        if (role !== "admin") {
+            return res.status(403).json({
                 success: false,
                 message: "Only admins can add sections."
-             })
-         }
+            })
+        }
         const { name, description, data_sources, tone, allowed_topics, blocked_topics } = req.body;
         if (!name || !description || !tone) {
             return res.status(400).json({
@@ -22,8 +23,40 @@ export const addSection = async (req: Request, res: Response) => {
                 message: "At least one data source is required",
             });
         }
-        console.log(data_sources, allowed_topics);
 
+        const subscription = await prisma.subscription.findFirst({
+            where: {
+                organization_id: (req as any).user.organizationId,
+            },
+            select: {
+                plan: true
+            }
+        });
+        const plan = subscription?.plan as string;
+        const knowledgeLength = PLANS[plan as keyof typeof PLANS].knowledgeSources;
+        console.log(knowledgeLength, data_sources.length);
+
+        if (knowledgeLength < data_sources.length) {
+            return res.status(403).json({
+                success: false,
+                message: `Your current plan allows only ${knowledgeLength} knowledge sources. Please upgrade your plan to add more sources.`
+            })
+        }
+        const existingSources = await prisma.knowledgeSource.findMany({
+            where: {
+                id: {
+                    in: data_sources
+                },
+                org_id: (req as any).user.organizationId
+            }
+        });
+
+        if (existingSources.length !== data_sources.length) {
+            return res.status(400).json({
+                success: false,
+                message: "Some knowledge sources are invalid"
+            })
+        }
         const section = await prisma.section.create({
             data: {
                 userEmail: (req as any).user.email,
@@ -34,9 +67,9 @@ export const addSection = async (req: Request, res: Response) => {
                 allowedTopics: allowed_topics || [],
                 blockedTopics: blocked_topics || [],
                 sourceIds: {
-                    connect: data_sources.map((id: string) => ({
-                        id,
-                    })),
+                    connect: existingSources.map(source => ({
+                        id: source.id
+                    }))
                 },
                 status: "active",
             }
@@ -44,7 +77,7 @@ export const addSection = async (req: Request, res: Response) => {
         return res.status(201).json({
             success: true,
             message: "Section added successfully",
-            data: section,
+            data: {...section, sourceIds: existingSources },
         });
     } catch (error) {
         console.error("Error adding section:", error);
@@ -58,8 +91,8 @@ export const getSections = async (req: Request, res: Response) => {
     try {
         const sections = await prisma.section.findMany({
             where: { org_id: (req as any).user.organizationId },
-            include:{
-                sourceIds:true
+            include: {
+                sourceIds: true
             }
         });
         return res.status(200).json({
@@ -80,7 +113,7 @@ export const deleteSection = async (req: Request, res: Response) => {
     try {
         const id = req.params.id as string;
         const role = (req as any).user.role;
-        if(role !== "admin"){
+        if (role !== "admin") {
             return res.status(403).json({
                 success: false,
                 message: "Only admins can delete sections."

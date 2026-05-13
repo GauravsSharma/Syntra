@@ -109,12 +109,14 @@ const KnowledgeTable = ({ isLoading, sources, setActiveSource, setIsSheetOpen })
                     {new Date(source?.last_updated).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
+                    
                     <Button
-                      variant="outline"
-                      className="text-[12px] px-3 sm:px-4 text-zinc-400 hover:text-zinc-300 hover:bg-transparent bg-transparent cursor-pointer"
-                      onClick={() => handleRowClick(source)}
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-zinc-400 hover:text-white hover:bg-white/5"
+                       onClick={() => handleRowClick(source)}
                     >
-                      VIEW
+                      View
                     </Button>
                   </TableCell>
                 </TableRow>

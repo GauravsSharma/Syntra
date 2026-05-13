@@ -1,9 +1,13 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { jwtVerify, SignJWT } from "jose";
-import { countConversatonToken, generateReply, summarizeConversation } from "../utils/ai";
-import { parseAIResponse } from "../utils/help";
+import { countConversatonToken, summarizeConversation ,generateReply} from "../utils/ai";
+import { parseAIResponse, sendEmail, validateAccess } from "../utils/help";
 import { io } from "..";
+// import {  } from "../utils/a12";
+import { countMessageTokens } from "../utils/token";
+import { scheduleEscalationTimeout } from "../utils/escalationTimer";
+import {  } from "../utils/a12";
 
 export const createSession = async (req: Request, res: Response) => {
     try {
@@ -48,7 +52,7 @@ export const config = async (req: Request, res: Response) => {
     try {
         const token = req.query.token as string;
 
-        console.log(req.query);
+
 
         if (!token) {
             return res.status(404).json({
@@ -96,6 +100,15 @@ export const chatToBot = async (req: Request, res: Response) => {
         let widgetId: string | undefined;
         let org_id: string | undefined
         try {
+            const validate = await validateAccess(org_id!)
+            if (!validate) {
+                return res.status(403).json({
+                    success: false,
+                    message: "You are out of limit of AI messages for your current plan. Please upgrade your plan to continue using the service."
+                })
+            }
+            console.log("validaton to sai h");
+            
             const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
             const { payload } = await jwtVerify(token, secret)
             sessionId = payload.sessionId as string
@@ -113,6 +126,7 @@ export const chatToBot = async (req: Request, res: Response) => {
         }
 
         let { messages, sectionId } = req.body;
+        console.log("mssg bhi mila" ,messages[0]);
         if (!sectionId) {
             return res.status(400).json({
                 success: false,
@@ -132,16 +146,17 @@ export const chatToBot = async (req: Request, res: Response) => {
         if (!existingConversation) {
             const forwarded = req.headers["x-forwarded-for"];
             const ip = Array.isArray(forwarded)
-                ? forwarded[0]
+            ? forwarded[0]
                 : forwarded?.split(",")[0] || req.socket?.remoteAddress || "Unknown IP";
             const visitorName = `visitor(${ip})`;
 
-            await prisma.conversation.create({
+            existingConversation = await prisma.conversation.create({
                 data: {
                     id: sessionId,
                     chatbot_id: widgetId,
                     visitor_ip: ip,
-                    name: visitorName
+                    name: visitorName,
+                    org_id
                 }
             })
             const previousMessages = messages.slice(0, -1);
@@ -171,11 +186,10 @@ export const chatToBot = async (req: Request, res: Response) => {
             where: {
                 id: sectionId,
             },
-
             select: {
                 id: true,
                 tone: true,
-
+                
                 sourceIds: {
                     select: {
                         id: true,
@@ -184,18 +198,21 @@ export const chatToBot = async (req: Request, res: Response) => {
                 },
             },
         });
-        console.log(section);
-        
-        if(!section){
+       
+
+        if (!section) {
             return res.status(404).json({
                 success: false,
                 message: "Section not found"
             })
         }
         let context = section.sourceIds.map((s) => s.content).filter(Boolean).join("\n\n");
-        console.log(context);
-        const tokenCount = await countConversatonToken(messages);
-        if (tokenCount > 2000) {
+        console.log("section bhi mila");
+        
+        const tokenCount = countMessageTokens(messages);
+
+
+        if (tokenCount > 600) {
             const recentMessage = messages.slice(-10);
             const olderMessage = messages.slice(0, -10);
             if (olderMessage.length > 0) {
@@ -204,9 +221,21 @@ export const chatToBot = async (req: Request, res: Response) => {
                 messages = recentMessage;
             }
         }
-        const reply = await generateReply(context, messages);
-        const { status, mssg } = parseAIResponse(reply)
+        if (!existingConversation) {
+            return res.status(400).json({
+                success:false,
+               message:"Conversation not found"
+            })
+        }
+        const st = existingConversation?.status || "ACTIVE"
+        console.log("ai ko mssg bejaaa");
+        const reply = await generateReply(context, messages, st, existingConversation.escalation_count);
+        console.log("replaybhi dia", reply);
+        
+        const { status, mssg, user_email } = parseAIResponse(reply)
         //store reply in db
+    
+
         const endMssg = await prisma.message.create({
             data: {
                 role: "assistant",
@@ -214,9 +243,11 @@ export const chatToBot = async (req: Request, res: Response) => {
                 conversation_id: sessionId
             }
         })
-        if (status === "escalated") {
-            console.log("escalated tak to aya tha ");
+
+        if (status === 'ESCALATED' && existingConversation?.status === 'OPEN') {
+            console.log("escalated tak to aya tha ",status);
             //status, id ,name ,time ,lastmessage
+            scheduleEscalationTimeout(sessionId, org_id)
             const conv = {
                 id: sessionId,
                 status: "ESCALATED",
@@ -228,9 +259,10 @@ export const chatToBot = async (req: Request, res: Response) => {
                     role: "assistant",
                 },
             }
+            
             io.to(org_id).emit("new:escalation", conv)
             io.to(sessionId).emit("chat:escalated")
-            console.log("escalated tak to aya tha yha bhi");
+        
             await prisma.conversation.update({
                 where: { id: sessionId },
                 data: {
@@ -239,7 +271,58 @@ export const chatToBot = async (req: Request, res: Response) => {
                 },
             });
         }
-        console.log("Lgging the messg", mssg);
+        const org = await prisma.organization.findUnique({
+            where:{id:org_id},
+            select:{
+                owner_email:true
+            }
+        })
+        if (status === "EXPIRED" && user_email) {
+            sendEmail(org?.owner_email || "",user_email)      
+            await prisma.conversation.update({
+                where: { id: sessionId },
+                data: {
+                    client_email:user_email
+                },
+            });
+        }
+
+        const subscription = await prisma.subscription.findFirst({
+            where: {
+                organization_id: org_id!,
+            },
+            select: {
+                plan: true,
+            },
+        });
+
+        if (!subscription) {
+            throw new Error("Subscription not found");
+        }
+
+        const plan = subscription.plan;
+
+        const data =
+            plan === "FREE"
+                ? {
+                    lifetime_ai_messages_used: {
+                        increment: 1,
+                    },
+                }
+                : {
+                    monthly_ai_messages_used: {
+                        increment: 1,
+                    },
+                };
+
+        await prisma.organizationUsage.update({
+            where: {
+                organization_id: org_id!,
+            },
+            data,
+        });
+
+
 
         return res.status(200).json({
             success: true,

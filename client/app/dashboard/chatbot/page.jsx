@@ -34,7 +34,7 @@ export default function ChatbotPage() {
   const [input, setInput] = useState("");
   const [activeSection, setActiveSection] = useState(null);
   const scrollRef = useRef(null);
-
+  const [isChangesSaved, setIsChangesSaved] = useState(false);
   const { data, isLoading: knowLoading } = useGetSections()
 
   useEffect(() => {
@@ -97,7 +97,9 @@ export default function ChatbotPage() {
       handleSend();
     }
   };
-  const isChanged = metaData && metaData?.color !== primaryColor || metaData?.welcome_message !== welcomeMessage
+
+  console.log();
+  
   useEffect(() => {
     if (!metaData) return
     if (metaData.color) {
@@ -115,11 +117,12 @@ export default function ChatbotPage() {
     const secs = data.map((s) => {
       return { name: s.name, id: s.id }
     })
-
-
     setSections(secs);
   }, [data])
-
+  useEffect(()=>{
+      const isChanged = metaData && metaData?.color !== primaryColor || metaData?.welcome_message !== welcomeMessage
+    setIsChangesSaved(isChanged);
+  },[primaryColor,welcomeMessage])
   if (isLoading) {
     return <div className="h-60 w-full flex justify-center items-center text-sm text-zinc-400">Loading...</div>
   }
@@ -177,7 +180,8 @@ export default function ChatbotPage() {
                 setPrimaryColor={setPrimaryColor}
                 welcomeMessage={welcomeMessage}
                 setWelcomeMessage={setWelcomeMessage}
-                isChanged={isChanged}
+                isChanged={isChangesSaved}
+                setIsChangesSaved={setIsChangesSaved}
               />
             </div>
 

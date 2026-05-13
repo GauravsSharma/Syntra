@@ -119,7 +119,7 @@ export const addKnowledge = async (req: Request, res: Response) => {
         return res.status(201).json({
             success: true,
             message: "Knowledge added successfully",
-            data: createdData,
+            source: createdData,
         });
 
     } catch (error) {

@@ -3,11 +3,16 @@ import CurrentPlanCard from "@/components/billing/CurrentPlanCard";
 import PlanCard from "@/components/billing/PlanCard";
 import { Separator } from "@/components/ui/separator";
 import { useGetCurrentPlan, useUpgradePlan } from "@/hooks/usePlans";
+import api from "@/lib/axios";
+import { useRouter } from "next/navigation";
+import Script from "next/script";
+import { toast } from "sonner";
 
 
 export default function BillingPage() {
     const { data: currentPlan, isLoading } = useGetCurrentPlan()
-    const {mutate,isPending} = useUpgradePlan()
+    const { mutate, isPending } = useUpgradePlan()
+    const router = useRouter();
     if (isLoading) {
         return (
             <div className="min-h-screen bg-black text-white p-8">
@@ -21,14 +26,64 @@ export default function BillingPage() {
             </div>
         )
     }
-  const handleUpgrade = (plan) => {
-     mutate(plan.toUpperCase(),{
-        onSuccess:()=>{
+    const handleUpgrade = (plan) => {
+        console.log(plan);
+        
+        mutate(plan.toUpperCase(), {
+            onSuccess: (order) => {
+                loadPaymentPage(order);
+            }
+        })
+    }
+    const loadPaymentPage = (order) => {
+        console.log(order);
+        console.log(process.env.NEXT_PUBLIC_RAZORPAY_KEY);
+        
+        const options = {
+            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY,
+            amount: order.amount,
+            currency: order.currency,
+            name: "Syntra AI",
+            description: "",
+            image: "/favicon.svg",
+            order_id: order.id,
 
-        }
-     })
-  }
-    console.log(currentPlan);
+            handler: async (response) => {
+                try {
+                    const res = await api.post("/api/plans/verify", {
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_signature: response.razorpay_signature,
+                    });
+
+                    if (res.data.success) {
+                        router.push(`/dashboard/billing`);
+                    }
+                } catch (err) {
+                    console.log(err);
+                    toast.error("Payment verification failed");
+                }
+            },
+
+            prefill: {
+                name: "Gaurav Kumar",
+                email: "gaurav.kumar@example.com",
+                contact: "+919876543210",
+            },
+
+            notes: {
+                address: "Razorpay Corporate Office",
+            },
+
+            theme: {
+                color: "#3399cc",
+            },
+        };
+
+        const razorpay = new window.Razorpay(options);
+        razorpay.open();
+    };
+
     return (
         <div className="min-h-screen bg-black text-white p-8">
             <div className="max-w-6xl mx-auto">
@@ -65,7 +120,7 @@ export default function BillingPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <PlanCard
-                    active={currentPlan.name ==="Free"}
+                        active={currentPlan.name === "Free"}
                         name="Free"
                         description="Get started for free"
                         price="Free"
@@ -75,7 +130,7 @@ export default function BillingPage() {
                             "Analytics dashboard",
                         ]}
                         handleUpgrade={handleUpgrade}
-                        
+
                     />
 
                     <PlanCard
@@ -95,7 +150,7 @@ export default function BillingPage() {
 
                     <PlanCard
                         pro
-                            active={currentPlan.name === "Ninja Pro"}
+                        active={currentPlan.name === "Ninja Pro"}
                         name="Ninja Pro"
                         description="Unlimited power"
                         price="$29.99"
@@ -114,6 +169,10 @@ export default function BillingPage() {
                     and email support.
                 </p>
             </div>
+            <Script
+                src="https://checkout.razorpay.com/v1/checkout.js"
+                strategy="afterInteractive"
+            />
         </div>
     );
 }

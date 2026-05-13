@@ -63,7 +63,7 @@ model Subscription {
   organization          Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
 
   status                SubscriptionStatus @default(INACTIVE)
-
+  plan                  PlanType @default(FREE)
   /// razorpay
   razorpay_order_id     String?
   razorpay_payment_id   String?
@@ -82,7 +82,7 @@ model OrganizationUsage {
   organization               Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
 
   /// lifetime usage for free plan
-  lifetime_ai_messages_used  Int @default(100)
+  lifetime_ai_messages_used  Int @default(0)
 
   /// monthly usage for paid plans
   monthly_ai_messages_used   Int @default(0)
@@ -159,24 +159,26 @@ model TeamMember {
 enum ConversationStatus {
   OPEN
   ESCALATED
-  RESOLVED
   ACTIVE
+  RESOLVED
+  EXPIRED   // ← naya: 10 min mein agent nahi aaya
 }
 
 model Conversation {
-  id           String             @id @default(uuid())
-  user_email   String?
-  visitor_ip   String?
-  name         String?
-  chatbot_id   String
-  created_at   DateTime           @default(now())
-
-  status        ConversationStatus @default(OPEN)
-  escalated_at  DateTime?
-  resolved_at   DateTime?
-  resolved_by   String?            // 👈 bas yeh add karo (email of agent)
-
-  messages      Message[]
+  id                  String             @id @default(uuid())
+  user_email          String?
+  visitor_ip          String?
+  name                String?
+  chatbot_id          String
+  created_at          DateTime           @default(now())
+  status              ConversationStatus @default(OPEN)
+  escalated_at        DateTime?
+  resolved_at         DateTime?
+  resolved_by         String?
+  org_id              String
+  client_email        String?
+  escalation_count    Int                @default(0)  // ← naya
+  messages            Message[]
 }
 
 model Message {

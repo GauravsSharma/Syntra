@@ -22,12 +22,14 @@ export function AppearancePanel({
   welcomeMessage,
   setWelcomeMessage,
   isChanged,
+  setIsChangesSaved
   // isSaving = false
 }) {
   const { mutate, isPending: isSaving } = useUpdateChatbotConfig()
   const handleSave = () => {
     mutate({ color: primaryColor, welcomeMessage }, {
       onSuccess: () => {
+        setIsChangesSaved(false);
         toast.success("Changes saved.")
       },
       onError: () => {
