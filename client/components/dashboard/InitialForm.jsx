@@ -3,6 +3,8 @@ import { cn } from '@/lib/utils';
 import { Building2, ChevronLeft, GlobeIcon, LinkIcon, Sparkles, Settings } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react'
 import { useSendMetadata } from '@/hooks/useUser';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 const STEPS = [
     {
         id: "business",
@@ -46,7 +48,7 @@ const InitialForm = () => {
         websiteUrl: "",
         externalLinks: "",
     });
-
+    const router = useRouter()
     const inputRef = useRef(null);
     const isLastStep = currentStep === STEPS.length - 1;
     const progress = ((currentStep + 1) / STEPS.length) * 100;
@@ -90,11 +92,12 @@ const InitialForm = () => {
         // Simulate async submission
         mutate(formData, {
             onSuccess: () => {
-                alert("Organization setup complete!");
+                toast.success("Organization setup complete!");
+                router.refresh()
                // You can redirect or reset the form here
             },
             onError: () => {
-                alert("There was an error submitting your data. Please try again.");
+                toast.error("There was an error submitting your data. Please try again.");
             },
         });
     };

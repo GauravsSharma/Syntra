@@ -11,12 +11,14 @@ import { useGetUser } from '@/hooks/useUser';
 export default function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
-   useGetUser()
+
+    useGetUser();
+
     const pathname = usePathname();
     const { user } = useUserStore();
 
     const loginInUser = () => {
-        window.location.href = "http://localhost:5000/api/auth/login";
+        window.location.href = 'http://localhost:5000/api/auth/login';
     };
 
     const links = [
@@ -27,7 +29,7 @@ export default function Navbar() {
 
     useEffect(() => {
         const handleScroll = () => {
-            setIsScrolled(window.scrollY > 50);
+            setIsScrolled(window.scrollY > 30);
         };
 
         window.addEventListener('scroll', handleScroll);
@@ -41,19 +43,31 @@ export default function Navbar() {
         <>
             <nav
                 className={`
-                    fixed top-0 left-0 w-full z-50
-                    transition-all duration-300
+                    fixed top-4 left-1/2 -translate-x-1/2
+                    w-[95%] max-w-7xl z-50
+                    transition-all duration-300 ease-out
+                    rounded-2xl
+
                     ${isScrolled
-                        ? 'backdrop-blur-xl bg-[#f5f1ea]/80 border-b border-black/5'
-                        : 'bg-transparent'
+                        ? `
+                            bg-white/10
+                            backdrop-blur-2xl
+                            backdrop-saturate-150
+                            border border-white/20
+                            shadow-[0_8px_32px_rgba(0,0,0,0.12)]
+                          `
+                        : `
+                            bg-transparent
+                            border border-transparent
+                          `
                     }
-                    `}
+                `}
             >
-                <div className="max-w-7xl mx-auto flex items-center justify-between px-6 md:px-10 py-5">
+                <div className="flex items-center justify-between px-6 md:px-8 py-4">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2">
                         <Image
-                            src={"/syntra.png"}
+                            src="/syntra.png"
                             height={130}
                             width={130}
                             alt="Syntra Logo"
@@ -71,7 +85,7 @@ export default function Navbar() {
                                 className="
                                     text-[15px]
                                     font-medium
-                                    text-black/65
+                                    text-black/70
                                     hover:text-black
                                     transition-colors
                                 "
@@ -84,26 +98,26 @@ export default function Navbar() {
                     {/* Desktop Buttons */}
                     <div className="hidden md:flex items-center gap-3">
                         {!user && (
+                            <>
                             <button
                                 onClick={loginInUser}
                                 className="
                                     px-5 py-2.5
                                     rounded-full
-                                    border border-black/10
-                                    bg-white/50
+                                    border border-white/20
+                                    bg-white/20
+                                    backdrop-blur-xl
                                     text-sm
                                     font-semibold
                                     text-black
-                                    hover:bg-white
+                                    hover:bg-white/30
                                     transition-all
                                     active:scale-95
-                                "
-                            >
+                                    "
+                                    >
                                 Login
                             </button>
-                        )}
-
-                        <button
+                              <button
                             className="
                                 px-5 py-2.5
                                 rounded-full
@@ -118,6 +132,25 @@ export default function Navbar() {
                         >
                             Get Started Free
                         </button>
+                                </>
+                        )}
+{user &&
+                        <Link
+                        href={"/dashboard"}
+                            className="
+                                px-5 py-2.5
+                                rounded-full
+                                bg-black
+                                text-white
+                                text-sm
+                                font-semibold
+                                hover:opacity-90
+                                transition-all
+                                active:scale-95
+                            "
+                        >
+                            Dashboard
+                        </Link>}
                     </div>
 
                     {/* Mobile Toggle */}
@@ -138,9 +171,10 @@ export default function Navbar() {
                     <div
                         className="
                             md:hidden
-                            border-t border-black/5
-                            bg-[#f5f1ea]/95
-                            backdrop-blur-xl
+                            border-t border-white/10
+                            bg-white/10
+                            backdrop-blur-2xl
+                            rounded-b-2xl
                         "
                     >
                         <div className="px-6 py-6 flex flex-col gap-5">
@@ -169,10 +203,11 @@ export default function Navbar() {
                                             w-full
                                             py-3
                                             rounded-full
-                                            border border-black/10
+                                            border border-white/20
+                                            bg-white/20
+                                            backdrop-blur-xl
                                             text-sm
                                             font-semibold
-                                            bg-white
                                             text-black
                                         "
                                     >
@@ -199,8 +234,8 @@ export default function Navbar() {
                 )}
             </nav>
 
-            {/* Spacer because navbar is fixed */}
-            <div className="h-[90px]" />
+            {/* Spacer */}
+            <div className="h-[110px]" />
         </>
     );
 }

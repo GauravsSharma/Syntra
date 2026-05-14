@@ -166,3 +166,11 @@ export const useGetOverview = () => {
     },
   });
 }
+export const useDeleteOrg = () => {
+  return useMutation({
+    mutationFn: async () => {
+      const res = await api.delete("/api/organization");
+      return res.data.message;
+    },
+  });
+}

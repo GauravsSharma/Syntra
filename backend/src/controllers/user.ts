@@ -95,7 +95,6 @@ export const validateScalekitCallback = async (req: Request, res: Response) => {
             });
 
         }
-
         const userSession = {
             email: user.email,
             organization_id: organizationId,
@@ -180,23 +179,21 @@ export const addMetadata = async (req: Request, res: Response) => {
 export const getMetadata = async (req: Request, res: Response) => {
     try {
         const user = (req as any).user;
+        const role = (req as any).user.role;
+        console.log("lolllll",role);
+        
         const cookie = req.cookies.user_metadata;
         if (cookie) {
             return res.status(200).json({ source: "cache", metadata: JSON.parse(cookie) });
         }
-        const metadata = await prisma.organization.findUnique({
+        let metadata = await prisma.organization.findUnique({
             where: { id: user.organizationId },
-            select: {
-                business_name: true,
-                website_url: true,
-                external_links: true,
-            }
         })
         if (!metadata || !metadata.business_name || !metadata.website_url) {
             return res.status(404).json({ message: "Metadata not found" });
         }
-        res.cookie("user_metadata", JSON.stringify(metadata), {
-
+        const data = {...metadata, role}
+        res.cookie("user_metadata", JSON.stringify(data), {
             httpOnly: true,
             sameSite: "lax",
             secure: process.env.NODE_ENV === "production",
@@ -205,7 +202,7 @@ export const getMetadata = async (req: Request, res: Response) => {
         });
         return res.status(200).json({
             source: "database",
-            metadata
+            metadata:data
         });
     } catch (error) {
         console.log(error);

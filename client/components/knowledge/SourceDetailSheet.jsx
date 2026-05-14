@@ -3,9 +3,12 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Globe, X } from 'lucide-react'
 import { Button } from '../ui/button'
 import { getStatusBadge } from '@/global/getIconeBadge'
+import { useDeleteKnowledgeSource } from '@/hooks/useKnowledge';
+import { toast } from 'sonner';
 
 const SourceDetailSheet = ({ isSheetOpen, setIsSheetOpen, activeSource }) => {
-
+    const { mutate: deleteKnowledge, isPending } =
+        useDeleteKnowledgeSource()
     return (
 
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
@@ -50,9 +53,18 @@ const SourceDetailSheet = ({ isSheetOpen, setIsSheetOpen, activeSource }) => {
                     <div className="px-5 py-4 border-t border-zinc-800">
                         <Button
                             variant="destructive"
+                            disabled={isPending}
+                            onClick={() =>
+                                deleteKnowledge(activeSource?.id, {
+                                    onSuccess: () => {
+                                        setIsSheetOpen(false)
+                                        toast.success("Knowledge deleted.")
+                                    },
+                                })
+                            }
                             className="w-full bg-transparent border border-red-500/60 text-red-500 hover:bg-red-500/10 hover:border-red-500"
                         >
-                            Disconnect Source
+                            {isPending ? 'Disconnecting...' : 'Disconnect Source'}
                         </Button>
                     </div>
 

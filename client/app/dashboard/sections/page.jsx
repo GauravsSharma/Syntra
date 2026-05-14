@@ -1,6 +1,18 @@
 'use client'
 
 import { useState } from 'react'
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import SectionsHeader from '@/components/sections/SectionsHeader'
 import SectionsTable from '@/components/sections/SectionsTable'
 import SectionFormFields from '@/components/sections/SectionFormFields'
@@ -16,6 +28,7 @@ import {
   useAddSection,
   useDeleteSection,
   useGetSections,
+  useToggleSectionStatus
 } from '@/hooks/useSections'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
@@ -41,7 +54,8 @@ const SectionsPage = () => {
 
   const { mutate: deleteSec, isPending: isDeleting } =
     useDeleteSection()
-
+const { mutate: toggleStatus, isPending: togglePending } =
+  useToggleSectionStatus()
   const [selectedSources, setSelectedSources] = useState([])
 
   const { isLoading } = useGetSections(metadata)
@@ -199,30 +213,94 @@ const SectionsPage = () => {
             </>
           )}
 
-          {selectedSection?.id !== 'new' && (
-            <div className="p-4 sm:p-6 bg-red-500/5 border-t border-red-500/10 space-y-3">
-              <h5 className="text-sm font-medium text-red-400">
-                Danger Zone
-              </h5>
+        {selectedSection?.id !== 'new' && (
+  <div className="p-4 sm:p-6 bg-red-500/5 border-t border-red-500/10 space-y-3">
+    <h5 className="text-sm font-medium text-red-400">
+      Danger Zone
+    </h5>
 
-              <p className="text-xs text-red-500/70 leading-relaxed">
-                Deleting this section will remove all
-                associated routing rules.
-              </p>
+    <p className="text-xs text-red-500/70 leading-relaxed">
+      Deleting this section will remove all associated
+      routing rules.
+    </p>
 
-              <Button
-                variant="destructive"
-                size="sm"
-                className="w-full rounded-lg cursor-pointer bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20"
-                onClick={handleDeleteSection}
-                disabled={isDeleting}
-              >
-                {isDeleting
-                  ? 'Deleting...'
-                  : 'Delete Section'}
-              </Button>
-            </div>
+    {/* toggle status button */}
+    <Button
+      variant="outline"
+      size="sm"
+      className="w-full rounded-lg border border-yellow-500/20 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 cursor-pointer"
+      disabled={togglePending}
+      onClick={() =>
+        toggleStatus(selectedSection.id, {
+          onSuccess: () => {
+            toast.success('Section status updated')
+          },
+
+          onError: () => {
+            toast.error('Failed to update section status')
+          },
+        })
+      }
+    >
+      {togglePending && (
+        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+      )}
+
+      {togglePending
+        ? 'Updating...'
+        : selectedSection?.status === 'active'
+        ? 'Deactivate Section'
+        : 'Activate Section'}
+    </Button>
+
+    {/* delete dialog */}
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="destructive"
+          size="sm"
+          className="w-full rounded-lg cursor-pointer bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20"
+          disabled={isDeleting}
+        >
+          {isDeleting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Deleting...
+            </>
+          ) : (
+            'Delete Section'
           )}
+        </Button>
+      </AlertDialogTrigger>
+
+      <AlertDialogContent className="bg-[#131313] border border-zinc-800 text-white">
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            Delete Section?
+          </AlertDialogTitle>
+
+          <AlertDialogDescription className="text-zinc-400">
+            This action cannot be undone. This will
+            permanently delete the section.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel className="border-zinc-700 bg-transparent text-white hover:bg-zinc-800">
+            Cancel
+          </AlertDialogCancel>
+
+          <AlertDialogAction
+            className="bg-red-600 hover:bg-red-700"
+            onClick={handleDeleteSection}
+          >
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </div>
+)}
         </SheetContent>
       </Sheet>
     </div>

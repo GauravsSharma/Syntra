@@ -90,7 +90,7 @@ export const addSection = async (req: Request, res: Response) => {
 export const getSections = async (req: Request, res: Response) => {
     try {
         const sections = await prisma.section.findMany({
-            where: { org_id: (req as any).user.organizationId },
+            where: { org_id: (req as any).user.organizationId},
             include: {
                 sourceIds: true
             }
@@ -162,3 +162,84 @@ export const deleteSection = async (req: Request, res: Response) => {
         });
     }
 }
+export const toggleSectionStatus = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const sectionId = req.params.sectionId as string;
+
+    const role = (req as any).user.role;
+    const userEmail = (req as any).user.email;
+    const organizationId = (req as any).user.organizationId;
+
+    // only admin allowed
+    if (role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "You don't have access to perform this action.",
+      });
+    }
+
+    // verify org ownership
+    const org = await prisma.organization.findUnique({
+      where: {
+        id: organizationId,
+      },
+      select: {
+        owner_email: true,
+      },
+    });
+
+    if (!org || org.owner_email !== userEmail) {
+      return res.status(403).json({
+        success: false,
+        message: "Only organization owner can perform this action.",
+      });
+    }
+
+    // find section
+    const section = await prisma.section.findUnique({
+      where: {
+        id: sectionId
+      },
+    });
+
+    if (!section) {
+      return res.status(404).json({
+        success: false,
+        message: "Section not found.",
+      });
+    }
+
+    // toggle status
+    const updatedSection = await prisma.section.update({
+      where: {
+        id: sectionId,
+      },
+      data: {
+        status: section.status === "active" ? "inactive" : "active",
+      },
+       include: {
+                sourceIds: true
+            }
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Section ${
+        updatedSection.status === "active"
+          ? "activated"
+          : "deactivated"
+      } successfully.`,
+      section: updatedSection,
+    });
+  } catch (error) {
+    console.error("Toggle section status error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+};

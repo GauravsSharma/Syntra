@@ -22,13 +22,13 @@ import { Badge } from "@/components/ui/badge";
                     </Badge>
                 );
 
-            case "error":
+            case "inactive":
                 return (
                     <Badge
                         variant="destructive"
                         className="bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20 shadow-none"
                     >
-                        Error
+                        {status}
                     </Badge>
                 );
 

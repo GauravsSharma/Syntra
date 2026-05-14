@@ -11,6 +11,7 @@ import { useGetKnowledgeSources } from "@/hooks/useKnowledge";
 import { useGetSections } from "@/hooks/useSections";
 import { useUserStore } from "@/stores/useUserStore";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 const SECTION_REPLIES = {
   FAQ: "Great question! You can find our frequently asked questions in the knowledge base. Is there something specific you'd like to know?",
@@ -54,7 +55,10 @@ export default function ChatbotPage() {
   };
 
   const handleSend = () => {
-    if (!input.trim() || !activeSection) return;
+    if (!input.trim() || !activeSection){
+      toast.error("Please add or select section")
+      return;
+    } 
 
     const userMsg = input.trim();
 

@@ -33,3 +33,16 @@ export const useDeleteSection = () => {
         },
     });
 }
+
+export const useToggleSectionStatus = () => {
+  const { updateSection } = useSectionStore();
+
+  return useMutation({
+    mutationFn: async (sectionId) => {
+      const res = await api.patch(`/api/section/${sectionId}`);
+      updateSection(res.data.section)
+      return res.data;
+    },
+  });
+};
+

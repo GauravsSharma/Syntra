@@ -1,57 +1,60 @@
-'use client';
-import { DribbbleIcon, GithubIcon, LinkedinIcon, TwitterIcon } from "lucide-react";
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
 
-export default function Footer() {
-    const links = [
-        { name: 'Terms of Service', href: '#terms-of-service' },
-        { name: 'Privacy Policy', href: '#privacy-policy' },
-        { name: 'Security', href: '#security' },
-        { name: 'Sitemap', href: '#sitemap' },
-    ];
-    return (
-        <motion.footer className="flex flex-col items-center px-4 md:px-16 lg:px-24 justify-center w-full pt-16 mt-40 glass border-0"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-        >
-            <Link href={"/"} className="flex justify-center items-center gap-2">
-                <Image
-                    src="/syntra.png"
-                    width={120}
-                    height={120}
-                    alt='syntra'
-                ></Image>
-            </Link>
-            <div className="flex flex-wrap items-center justify-center gap-8 py-8">
-                {links.map((link, index) => (
-                    <Link key={index} href={link.href} className='transition hover:text-gray-300'>
-                        {link.name}
+export default function Footer({ playfair }) {
+  const links = ["Features", "Pricing", "Docs", "Privacy", "Terms"];
+
+  return (
+    <footer className="w-full bg-transparent px-6 md:px-12 lg:px-20 pt-10 pb-8">
+      <div className="max-w-6xl mx-auto">
+
+        {/* Top row */}
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 pb-8 border-b border-[#ddd8d0]">
+
+          {/* Logo + tagline */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2.5">
+              {/* Logo mark */}
+               <Link href="/" className="flex items-center gap-2">
+                        <Image
+                            src="/syntra.png"
+                            height={130}
+                            width={130}
+                            alt="Syntra Logo"
+                            className="invert w-[110px] md:w-[130px] h-auto"
+                            priority
+                        />
                     </Link>
-                ))}
             </div>
-            <div className="flex items-center gap-6 pb-6">
-                <a href="#" className="hover:-translate-y-0.5 text-gray-200 transition-all duration-300">
-                    <DribbbleIcon />
-                </a>
-                <a href="#" className="hover:-translate-y-0.5 text-gray-200 transition-all duration-300">
-                    <LinkedinIcon />
-                </a>
-                <a href="#" className="hover:-translate-y-0.5 text-gray-200 transition-all duration-300">
-                    <TwitterIcon />
-                </a>
-                <a href="#" className="hover:-translate-y-0.5 text-gray-200 transition-all duration-300">
-                    <GithubIcon />
-                </a>
-            </div>
-            <hr className="w-full border-white/20 mt-6" />
-            <div className="flex flex-col md:flex-row items-center w-full justify-between gap-4 py-4">
-                <p>Build Ai agents for free</p>
-                <p>Copyright © 2026 <a href="/">Syntra</a>. All rights reservered.</p>
-            </div>
-        </motion.footer>
-    );
-};
+            <p className={`${playfair?.className ?? ""} italic text-[15px] text-[#888]`}>
+              AI support, built for humans.
+            </p>
+          </div>
+
+          {/* Nav links */}
+          <nav className="flex items-center gap-6 sm:gap-8 flex-wrap">
+            {links.map((link) => (
+              <a
+                key={link}
+                href="#"
+                className="text-[14px] text-[#555] hover:text-[#1a1a1a] transition-colors duration-150"
+              >
+                {link}
+              </a>
+            ))}
+          </nav>
+        </div>
+
+        {/* Bottom row */}
+        <div className="pt-6">
+          <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-[#aaa]">
+            © 2025 Syntra — All rights reserved.
+          </p>
+        </div>
+
+      </div>
+    </footer>
+  );
+}

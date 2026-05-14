@@ -18,8 +18,7 @@ export function ChatSimulator({
   scrollRef,
 }) {
   return (
-    <div className="flex flex-col h-full min-h-[500px] lg:min-h-0 rounded-xl border border-border bg-card overflow-hidden">
-      
+    <div className="flex flex-col h-full max-h-[480px] lg:max-h-[520px] rounded-xl border border-border bg-card overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-3 sm:px-4 py-3 border-b border-border shrink-0">
         <div className="flex items-center gap-2 min-w-0">
@@ -47,10 +46,10 @@ export function ChatSimulator({
       </div>
 
       {/* Messages */}
-      <div
-        ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-4 py-4"
-      >
+     <div
+  ref={scrollRef}
+  className="flex-1 overflow-y-auto min-h-0 px-3 sm:px-4 py-4"
+>
         <div className="flex flex-col gap-3">
           {messages.map((msg, i) => (
             <div

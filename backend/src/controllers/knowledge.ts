@@ -150,3 +150,86 @@ export const getKnowledge = async (req: Request, res: Response) => {
            }); 
     }   
 }
+export const deleteKnowledgeSource = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const id = req.params.id as string;
+
+    const role = (req as any).user.role;
+    const userEmail = (req as any).user.email;
+    const organizationId = (req as any).user.organizationId;
+
+    // only admin allowed
+    if (role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "You don't have access to perform this action.",
+      });
+    }
+
+    // verify org ownership
+    const org = await prisma.organization.findUnique({
+      where: {
+        id: organizationId,
+      },
+      select: {
+        owner_email: true,
+      },
+    });
+
+    if (!org || org.owner_email !== userEmail) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Only organization owner can perform this action.",
+      });
+    }
+
+    // check knowledge source exists
+    const knowledgeSource =
+      await prisma.knowledgeSource.findUnique({
+        where: {
+          id,
+        },
+      });
+
+    if (!knowledgeSource) {
+      return res.status(404).json({
+        success: false,
+        message: "Knowledge source not found.",
+      });
+    }
+
+    // optional extra safety
+    if (knowledgeSource.org_id !== organizationId) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized action.",
+      });
+    }
+
+    await prisma.knowledgeSource.delete({
+      where: {
+        id,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Knowledge source deleted successfully.",
+    });
+  } catch (error) {
+    console.error(
+      "Delete knowledge source error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+};

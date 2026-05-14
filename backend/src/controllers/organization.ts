@@ -3,11 +3,11 @@ import { prisma } from "../lib/prisma";
 import scalekit from "../config/scalkit";
 
 const COOKIE_OPTIONS = {
-  httpOnly: true,
-  sameSite: "lax" as const,
-  secure: process.env.NODE_ENV === "production",
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  path: "/",
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    path: "/",
 };
 
 export const getOrganization = async (req: Request, res: Response) => {
@@ -154,49 +154,121 @@ export const getMyOrganizations = async (req: Request, res: Response) => {
 
 
 export const switchOrganizations = async (req: Request, res: Response) => {
+    try {
+        const { org_id } = req.body;
+        const user_email = (req as any).user.email as string;
+        const role = (req as any).user.role as string;
+        const orgId = (req as any).user.organizationId;
+        // Check if user is the org owner
+        const ownedOrg = await prisma.organization.findFirst({
+            where: { owner_email: user_email, id: org_id },
+        });
+        if (org_id === orgId) {
+            return res.status(400).json({
+                success: true,
+                message: "You cannot switch in same org."
+            })
+        }
+        // Fall back to team membership check
+        const membership = !ownedOrg
+            ? await prisma.teamMember.findFirst({
+                where: { user_email, organization_id: org_id },
+                select: { organization_id: true, role: true },
+            })
+            : null;
+
+        if (!ownedOrg && !membership) {
+            return res.status(403).json({
+                success: false,
+                message: "You are not a member of this organization.",
+            });
+        }
+
+        const userSession = {
+            email: user_email,
+            organization_id: ownedOrg ? ownedOrg.id : membership!.organization_id,
+            role: ownedOrg ? "admin" : membership!.role,
+        };
+
+
+        const organization = ownedOrg
+            ? ownedOrg
+            : await prisma.organization.findUnique({
+                where: { id: membership!.organization_id },
+            });
+
+        const metadata = { ...organization, role: role === "member" ? "admin" : "member" }
+        res.cookie("user_session", JSON.stringify(userSession), COOKIE_OPTIONS);
+        res.cookie("user_metadata", JSON.stringify(metadata), COOKIE_OPTIONS);
+
+        return res.status(200).json({ success: true, organization: metadata });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error.",
+        });
+    }
+};
+
+
+export const deleteOrg = async (req: Request, res: Response) => {
   try {
-    const { org_id } = req.body;
-    const user_email = (req as any).user.email as string;
+    const organizationId = (req as any).user.organizationId;
+    const user_email = (req as any).user.email;
+    const role = (req as any).user.role;
 
-    // Check if user is the org owner
-    const ownedOrg = await prisma.organization.findFirst({
-      where: { owner_email: user_email, id: org_id },
-    });
-
-    // Fall back to team membership check
-    const membership = !ownedOrg
-      ? await prisma.teamMember.findFirst({
-          where: { user_email, organization_id: org_id },
-          select: { organization_id: true, role: true },
-        })
-      : null;
-
-    if (!ownedOrg && !membership) {
-      return res.status(403).json({
+    if (!organizationId) {
+      return res.status(400).json({
         success: false,
-        message: "You are not a member of this organization.",
+        message: "Organization id missing.",
       });
     }
 
-    const userSession = {
-      email: user_email,
-      organization_id: ownedOrg ? ownedOrg.id : membership!.organization_id,
-      role: ownedOrg ? "admin" : membership!.role,
-    };
+    if (role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "You don't have access to perform this action.",
+      });
+    }
 
-    
-    const organization = ownedOrg
-    ? ownedOrg
-    : await prisma.organization.findUnique({
-        where: { id: membership!.organization_id },
+    const org = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: {
+        owner_email: true,
+      },
     });
-    
-    res.cookie("user_session", JSON.stringify(userSession), COOKIE_OPTIONS);
-    res.cookie("user_metadata", JSON.stringify(organization), COOKIE_OPTIONS);
-    
-    return res.status(200).json({ success: true, organization });
+
+    if (!org) {
+      return res.status(404).json({
+        success: false,
+        message: "Organization not found.",
+      });
+    }
+
+    if (user_email !== org.owner_email) {
+      return res.status(403).json({
+        success: false,
+        message: "You don't have access to perform this action.",
+      });
+    }
+
+    await scalekit.organization.deleteOrganization(organizationId)
+    await prisma.organization.delete({
+      where: { id: organizationId },
+    });
+    // clear cookies
+    res.clearCookie("user_metadata");
+    res.clearCookie("user_session");
+
+    return res.status(200).json({
+      success: true,
+      message: "Organization deleted successfully.",
+    });
+
   } catch (error) {
-    console.error(error);
+    console.error("Delete org error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Internal server error.",

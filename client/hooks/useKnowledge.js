@@ -23,3 +23,19 @@ export const useGetKnowledgeSources = (metadata) => {
         }
     })
 }
+export const useDeleteKnowledgeSource = () => {
+  const { removeSource } = useKnowledgeStore();
+
+  return useMutation({
+    mutationFn: async (id) => {
+      const res = await api.delete(
+        `/api/knowledge/${id}`
+      );
+      return res.data;
+    },
+
+    onSuccess: (_, id) => {
+      removeSource(id);
+    },
+  });
+};
