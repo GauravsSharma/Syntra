@@ -25,7 +25,7 @@ export const getOverview = async (req: Request, res: Response) => {
     orderBy: {
         created_at: "desc", // latest conversations
     },
-    take: 5, // max 5 conversations
+    take:3, // max 5 conversations
     select: {
         id: true,
         visitor_ip: true,

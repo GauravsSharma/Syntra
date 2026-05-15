@@ -1,10 +1,12 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 
-const EmbedLayout = ({children}) => {
+const EmbedLayout = ({ children }) => {
   return (
-    <div className=''>
-      {children}
-    </div>
+    <Suspense fallback={<div>Loading...</div>}>
+      <div>
+        {children}
+      </div>
+    </Suspense>
   )
 }
 

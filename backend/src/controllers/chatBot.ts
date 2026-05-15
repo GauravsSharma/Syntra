@@ -94,16 +94,14 @@ export const testChatBot = async (req: Request, res: Response) => {
                 },
             },
         });
-        console.log(sources);
+   
         if(!sources){
             return res.status(404).json({
                 success: false,
                 message: "Section not found",
             });
         }
-        let context = sources?.sourceIds.map((s) => s.content).filter(Boolean).join("\n\n");
-        console.log(context);
-        
+        let context = sources?.sourceIds.map((s) => s.content).filter(Boolean).join("\n\n");        
         const tokenCount = countMessageTokens(messages);
         if (tokenCount > 600) {
             const recentMessage = messages.slice(-10);
@@ -115,7 +113,9 @@ export const testChatBot = async (req: Request, res: Response) => {
             }
         }
         const reply = await generateReplyForTesting(context, messages);
+        console.log("Ai reply",reply);
         const { mssg } = parseAIResponse(reply)
+        console.log("mssg",mssg)
         return res.status(200).json({
             success: true,
             message: mssg

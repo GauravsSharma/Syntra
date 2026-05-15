@@ -12,6 +12,9 @@ const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
 });
+export const metadata = {
+  title: "Dashboard | Syntra AI ",
+};
 
 export default async function DashboardLayout({ children }) {
   const cookieStore = await cookies();

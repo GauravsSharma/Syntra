@@ -20,6 +20,7 @@ import { useUserStore } from "@/stores/useUserStore";
 import { useConversationStore } from "@/stores/useConversationStore";
 import OrgSwitcher from "../OrgSwitcher";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import Image from "next/image";
 
 const bottomNavItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
@@ -84,22 +85,7 @@ export default function Sidebar() {
       >
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-4 py-5 border-b border-white/[0.06] min-h-[64px]">
-          <div className="flex items-center justify-center w-7 h-7 rounded-md bg-white shrink-0">
-            <div className="w-3.5 h-3.5 rounded-sm bg-[#0d0d10]" />
-          </div>
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.span
-                initial={{ opacity: 0, x: -6 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -6 }}
-                transition={{ duration: 0.2 }}
-                className="text-sm font-semibold text-white whitespace-nowrap tracking-tight"
-              >
-                SYNTRA
-              </motion.span>
-            )}
-          </AnimatePresence>
+          <Image src={"/syntra.png"} width={100} height={100} alt="Syntra AI" className=""/>
         </div>
 
         {/* Nav */}

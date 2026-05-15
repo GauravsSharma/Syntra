@@ -3,24 +3,24 @@ import { useEffect, useState } from "react";
 function EscalationOverlay({ escalated, onTimeout }) {
   const [timeLeft, setTimeLeft] = useState(60); // 10 min = 600 sec
 
-  useEffect(() => {
+    useEffect(() => {
     if (!escalated) return;
 
-    setTimeLeft(60); // reset every time escalated becomes true
+    setTimeLeft(60);
 
     const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          onTimeout(); // 🔥 trigger your function
-          return 0;
-        }
-        return prev - 1;
-      });
+      setTimeLeft((prev) => prev - 1);
     }, 1000);
 
     return () => clearInterval(interval);
   }, [escalated]);
+
+  // timeout handler separate effect
+  useEffect(() => {
+    if (timeLeft <= 0 && escalated) {
+      onTimeout();
+    }
+  }, [timeLeft, escalated, onTimeout]);
 
   // format mm:ss
   const formatTime = (t) => {

@@ -107,7 +107,7 @@ export const chatToBot = async (req: Request, res: Response) => {
                     message: "You are out of limit of AI messages for your current plan. Please upgrade your plan to continue using the service."
                 })
             }
-            console.log("validaton to sai h");
+        
             
             const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
             const { payload } = await jwtVerify(token, secret)
@@ -126,7 +126,7 @@ export const chatToBot = async (req: Request, res: Response) => {
         }
 
         let { messages, sectionId } = req.body;
-        console.log("mssg bhi mila" ,messages[0]);
+
         if (!sectionId) {
             return res.status(400).json({
                 success: false,
@@ -207,7 +207,7 @@ export const chatToBot = async (req: Request, res: Response) => {
             })
         }
         let context = section.sourceIds.map((s) => s.content).filter(Boolean).join("\n\n");
-        console.log("section bhi mila");
+    
         
         const tokenCount = countMessageTokens(messages);
 
@@ -228,11 +228,12 @@ export const chatToBot = async (req: Request, res: Response) => {
             })
         }
         const st = existingConversation?.status || "ACTIVE"
-        console.log("ai ko mssg bejaaa");
+
         const reply = await generateReply(context, messages, st, existingConversation.escalation_count);
-        console.log("replaybhi dia", reply);
-        
-        const { status, mssg, user_email } = parseAIResponse(reply)
+console.log("AI----->",reply);
+
+const { status, mssg, user_email } = parseAIResponse(reply)
+console.log("MSSG----->",mssg);
         //store reply in db
     
 
@@ -245,7 +246,6 @@ export const chatToBot = async (req: Request, res: Response) => {
         })
 
         if (status === 'ESCALATED' && existingConversation?.status === 'OPEN') {
-            console.log("escalated tak to aya tha ",status);
             //status, id ,name ,time ,lastmessage
             scheduleEscalationTimeout(sessionId, org_id)
             const conv = {

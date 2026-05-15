@@ -40,7 +40,7 @@ export default function AddMemberDialog({ open, setOpen, onMemberAdded }) {
 
     mutate({ ...form, member_email: form.email }, {
       onSuccess: () => {
-        setForm({ user: "", email: "" })
+        setForm({ name: "", email: "" })
         setOpen(false)
         toast.success("Member Invited successfully.")
       },

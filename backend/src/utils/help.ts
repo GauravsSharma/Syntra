@@ -2,60 +2,65 @@ import { Resend } from "resend";
 import { PlanType } from "../../generated/prisma/client";
 import { PLANS } from "../data/pricing";
 import { prisma } from "../lib/prisma";
-// types alag define karo
-type AIStatus = 'OPEN' | 'ESCALATED' | 'EXPIRED'
+type AIStatus = "ACTIVE" | "ESCALATED" | "EXPIRED"|"OPEN";
 
 export interface AIResponse {
   status: AIStatus;
   mssg: string;
-  user_email: string | null;
+  user_email?: string | null;
 }
+
+const VALID_STATUS = ["ACTIVE", "ESCALATED", "EXPIRED","OPEN"] as const;
 
 const isValidResponse = (data: any): data is AIResponse => {
   return (
     data &&
-    (data.status === "OPEN" || data.status === "ESCALATED" || data.status ==="EXPIRED") &&
+    typeof data === "object" &&
+    VALID_STATUS.includes(data.status) &&
     typeof data.mssg === "string" &&
-    (typeof data.user_email === "string" || data.user_email === null) // Fix 1: correct null check
+    (typeof data.user_email === "string" ||
+      data.user_email === null ||
+      data.user_email === undefined)
   );
 };
 
 export function parseAIResponse(rawText: string): AIResponse {
-  console.log("Ai reponse...", rawText);
+  const fallback: AIResponse = {
+    status: "ACTIVE",
+    mssg: "Something went wrong. Please try again.",
+    user_email: null,
+  };
 
   if (!rawText || typeof rawText !== "string") {
-    return {
-      status: "OPEN",
-      mssg: "Something went wrong. Please try again.",
-      user_email: null, // Fix 2: added missing required field
-    };
+    return fallback;
   }
 
   const trimmed = rawText.trim();
 
-  // 1. Try direct parse
+  // Direct JSON parse
   try {
     const parsed = JSON.parse(trimmed);
-    if (isValidResponse(parsed)) return parsed;
-    throw new Error("Invalid format");
+    
+    if (isValidResponse(parsed)) {
+      console.log("parsed json------->",parsed);
+      return {
+        status: parsed.status,
+        mssg: parsed.mssg.trim(),
+        user_email: parsed.user_email ?? null,
+      };
+    }
+    else{
+      return fallback
+    }
   } catch {}
-
-  // 2. Try extracting JSON from messy output
-  const match = trimmed.match(/\{[\s\S]*\}/);
-  if (match) {
-    try {
-      const parsed = JSON.parse(match[0]);
-      if (isValidResponse(parsed)) return parsed;
-    } catch {}
-  }
-
-  // 3. Final fallback
+  // Final fallback
   return {
-    status: "OPEN",
+    status: "ACTIVE",
     mssg: trimmed,
-    user_email: null, // Fix 2: added missing required field
+    user_email: null,
   };
 }
+
 export const validateAccess = async (
   orgId: string
 ): Promise<boolean> => {
